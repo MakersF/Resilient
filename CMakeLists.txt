@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(resilient CXX)
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 
 # set(HEADER_FILES "...")
 add_library(resilient INTERFACE)

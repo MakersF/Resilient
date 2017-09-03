@@ -4,8 +4,36 @@
 #include <utility>
 #include <tuple>
 #include <type_traits>
+#include <resilient/foldinvoke.hpp>
 
 namespace resilient {
+
+template<typename T>
+struct CallResult
+{
+    T* result; // possibly use a void* to erase the type
+    bool failure;
+};
+
+template<typename Callable>
+struct WrapResultInCallResult
+{
+    Callable&& d_callableRef;
+
+    template<typename ...Args>
+    using result_of_this = typename std::result_of<Callable(Args...)>::type;
+
+    template<typename ...Args>
+    CallResult<result_of_this<Args...>>
+    operator()(Args&&... args)
+    {
+        using ResultType = result_of_this<Args...>;
+        CallResult<ResultType> cr{nullptr, false};
+        // TODO what if it's void?
+        cr.result = new ResultType(d_callableRef(std::forward<Args>(args)...));
+        return cr;
+    }
+};
 
 template<typename ...FailureConditions>
 class FailureDetector
@@ -36,10 +64,14 @@ public:
     }
 
     template<typename C, typename ...Args>
-    auto detectFailure(C&& callable, Args&&... args) -> decltype(callable(std::forward<Args>(args)...))
+    decltype(auto) detectFailure(C&& callable, Args&&... args)
     {
         // TODO Execute all the failure detectors one into the other
-        return callable(std::forward<Args>(args)...);
+        return foldInvoke(
+            d_failureConditions,
+            WrapResultInCallResult<C>{std::forward<C>(callable)},
+            std::forward<Args>(args)...
+        );
     }
 
 private:
@@ -52,15 +84,6 @@ private:
     template<typename ...T>
     friend class FailureDetector;
 };
-
-// Specialize for empty FailureDetector to simply call the callable TODO might not be needed
-template<>
-template<typename C, typename ...Args>
-inline auto FailureDetector<>::detectFailure(C&& callable, Args&&... args)
--> typename std::result_of<C(Args...)>::type
-{
-    return std::forward<C>(callable)(std::forward<Args>(args)...);
-}
 
 }
 #endif

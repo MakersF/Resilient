@@ -12,13 +12,6 @@ template<typename ...Exceptions>
 struct Throws {};
 
 template<typename T>
-struct CallResult
-{
-    T* result; // possibly use a void* to erase the type
-    bool failure;
-};
-
-template<typename T>
 struct Returns
 {
     T d_failureValue;
@@ -45,19 +38,19 @@ struct Returns
     }
 };
 
-template<typename FailureDetector = resilient::FailureDetector<>>
-class RetryPolicy : private FailureDetector
+template<typename FailureDetector>
+class RetryPolicyImpl : private FailureDetector
 {
 public:
-    RetryPolicy() = default;
+    RetryPolicyImpl() = default;
 
-    explicit RetryPolicy(FailureDetector&& failureDetector)
+    explicit RetryPolicyImpl(FailureDetector&& failureDetector)
     : FailureDetector(std::forward<FailureDetector>(failureDetector))
     { }
 
 private:
     template<typename FailureCondition>
-    using after_adding_failure_t = RetryPolicy<typename FailureDetector::template after_adding_t<FailureCondition>>;
+    using after_adding_failure_t = RetryPolicyImpl<typename FailureDetector::template after_adding_t<FailureCondition>>;
 
 public:
     template<typename FailureCondition>
@@ -78,16 +71,20 @@ public:
 private:
 };
 
+#if 0
+using RetryPolicy = RetryPolicyImpl<resilient::FailureDetector<>>;
+
 class ResilientJob
 {
     // detect if it's a failure
     // what to do on failure
 public:
-    static RetryPolicy<> withRetryPolicy() // retrypolicy, circuitbreaker, fallback ...
+    static RetryPolicy withRetryPolicy() // retrypolicy, circuitbreaker, fallback ...
     {
-        return RetryPolicy<>();
+        return RetryPolicy();
     }
 };
+#endif
 
 }
 #endif
