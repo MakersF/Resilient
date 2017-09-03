@@ -4,6 +4,9 @@
 #include <boost/variant.hpp>
 #include <exception>
 #include <resilient/result.hpp>
+#include <resilient/appendable_tuple.hpp>
+#include <resilient/foldinvoke.hpp>
+#include <iostream>
 
 namespace resilient {
 
@@ -36,6 +39,18 @@ inline auto apply(F && f, T && t) {
 template<typename Job>
 using JobResult = typename std::decay<Job>::type::result_type;
 
+template<typename Policy>
+struct PolicyTraits
+{
+private:
+    using FunReturningResult = ResultTraits<int>::type (*) ();
+    using PolicyResult = std::result_of_t<Policy(FunReturningResult)>;
+
+public:
+    static constexpr bool is_valid_policy =
+        ResultTraits<PolicyResult>::is_result_type;
+};
+
 template<typename Callable, typename ...Args>
 class LValCall
 {
@@ -47,56 +62,122 @@ public:
     , d_args(args...)
     { }
 
-    result_type run() { return apply(d_callable, d_args); }
+    result_type operator()()
+    {
+        // return apply(d_callable, d_args);
+        return Failure{};
+    }
 
 private:
     Callable& d_callable;
     std::tuple<Args&...> d_args;
 };
 
-struct Job
+template<typename ...Args>
+struct AsFailable
 {
+public:
 
+    AsFailable(Args&... args)
+    : d_args(args...)
+    { }
+
+    template<typename Callable>
+    decltype(auto) operator()(Callable&& callable)
+    {
+        return apply(std::forward<Callable>(callable), d_args);
+    }
+
+private:
+    std::tuple<Args&...> d_args;
+};
+
+template<typename ...Policies>
+class Job
+{
+public:
+    template<typename Policy>
+    Job<Policies... , Policy> then(Policy&& policy)
+    {
+        static_assert(PolicyTraits<Policy>::is_valid_policy, "Not a valid policy");
+
+        return Job<Policies... , Policy>(
+            tuple_append(d_policies, std::forward<Policy>(policy)));
+    }
+
+    template<typename Policy>
+    static Job<Policy> with(Policy&& policy)
+    {
+        return Job<Policy>(std::tuple<Policy>(std::forward<Policy>(policy)));
+    }
+
+    template<typename Call, typename ...Args>
+    decltype(auto) run(Call&& call, Args&&... args)
+    {
+        foldInvoke(d_policies, LValCall<Call, Args...>(call, args...));
+    }
+
+private:
+
+    std::tuple<Policies...> d_policies;
+
+    explicit Job(std::tuple<Policies...>&& policies)
+    : d_policies(std::move(policies))
+    { }
+
+    template<typename ...T>
+    friend class Job;
 };
 
 
-
-
 //////////////////////////////////////////////////////////
-
 
 struct RetryPolicy
 {
     int times;
 
     template<typename Job>
-    JobResult<Job> run(Job&& job)
+    auto operator()(Job&& job) -> std::result_of_t<Job()>
     {
-        JobResult<Job> result = Failure{};
         for(int i = 0; i < times; i++)
         {
-            result = job.run();
+            std::cout << "Retry " << i << " " << std::flush;
+            auto&& result = job();
             if(not isFailure(result))
             {
                 return std::move(result);
             }
         }
-        return result;
+        return Failure{};
+    }
+};
+
+struct Monitor
+{
+    template<typename Job>
+    auto operator()(Job&& job) -> std::result_of_t<Job()>
+    {
+        std::cout << "Before " << std::flush;
+        auto ret = job();
+        std::cout << "After " << std::flush;
+        return std::move(ret);
     }
 };
 
 struct CircuitBreak
 {
-    bool open;
+    bool open = false;
 
     template<typename Job>
-    JobResult<Job> run(Job&& job)
+    auto operator()(Job&& job) -> std::result_of_t<Job()>
     {
-        if(not open)
+        if(open)
         {
-            return job.run();
+            std::cout << "Open " << std::flush;
+            return Failure{};
         }
-        return JobResult<Job>{false};
+        std::cout << "Closed " << std::flush;
+        return job();
     }
 };
 

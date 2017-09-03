@@ -37,15 +37,32 @@ TEST(test, test2)
 #endif
 }
 
+int func(char a, float b)
+{
+    std::cout << a << " " << b << std::endl;
+    return 1;
+}
+
 TEST(test, test3)
 {
     auto l1 = [](char a, float b) { std::cout << a << " " << b << std::endl; return 1; };
     char a = 'W';
     float b = 3.14;
-    LValCall<decltype(l1)&, char&, float&> job(l1, a, b);
+    //LValCall<decltype(l1)&, char&, float&> job(l1, a, b);
     //LValCall<decltype(l1)&, char, float> job(l1, 'Q', 6.28);
 
-    job.run();
     RetryPolicy rp{3};
-    rp.run(job);
+    CircuitBreak cb;
+    Monitor mntr;
+
+    Job<>
+    ::with(rp)
+    //::with(mntr)
+    .then(cb)
+    .then(mntr)
+    .then(CircuitBreak{true})
+    .run(func, a, b);
+
+    //job();
+    //rp(job);
 }

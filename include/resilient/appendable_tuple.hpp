@@ -3,31 +3,13 @@
 #include <utility>
 #include <tuple>
 
-template<typename ...Args>
-class AppendableTuple : public std::tuple<Args...>
+namespace resilient {
+
+template<typename Tuple, typename T>
+decltype(auto) tuple_append(Tuple&& tuple, T&& item)
 {
-private:
-    using Base = std::tuple<Args...>;
+    return std::tuple_cat(std::forward<Tuple>(tuple),
+                          std::tuple<T>(std::forward<T>(item)));
+}
 
-    template<typename This, typename T>
-    static std::tuple<Args..., T> append(This&& _this, T&& item)
-    {
-        return std::tuple_cat(std::forward<This>(_this),
-                              std::make_tuple(std::forward<T>(item)));
-    }
-
-public:
-    using Base::Base;
-
-    template<typename T>
-    std::tuple<Args..., T> append(T&& item) &
-    {
-        return append(*this, std::forward<T>(item));
-    }
-
-    template<typename T>
-    std::tuple<Args..., T> append(T&& item) &&
-    {
-        return append(std::move(*this), std::forward<T>(item));
-    }
 }

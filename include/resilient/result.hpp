@@ -37,19 +37,21 @@ bool isFailure(const T& result)
 }
 
 template<typename T>
-struct Result
+struct ResultTraits
 {
     using type = boost::variant<Failure, T>;
+    static constexpr bool is_result_type = false;
 };
 
 template<typename ...Args>
-struct Result<boost::variant<Failure, Args...>>
+struct ResultTraits<boost::variant<Failure, Args...>>
 {
     using type = boost::variant<Failure, Args...>;
+    static constexpr bool is_result_type = true;
 };
 
 template<typename Callable, typename ...Args>
-using ResultOf = typename Result<typename std::result_of<Callable(Args...)>::type>::type;
+using ResultOf = typename ResultTraits<typename std::result_of<Callable(Args...)>::type>::type;
 
 }
 

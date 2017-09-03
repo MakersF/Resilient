@@ -7,40 +7,37 @@
 
 namespace resilient {
 
-// TODO move index into the call, merge the two FoldInvokeImpl into one
 template<typename Tuple, std::size_t index, std::size_t length>
 struct FoldInvokeImpl
 {
-    template<typename Callable, typename ...Args>
-    static decltype(auto) call(Tuple& tuple, Callable&& callable, Args&&... args)
+    template<typename Callable>
+    static decltype(auto) call(Tuple& tuple, Callable&& callable)
     {
-        return std::get<index>(tuple)([&tuple, &callable](Args&&... innerArgs) mutable
+        return std::get<index>(tuple)([&tuple, &callable]() mutable
         {
-            FoldInvokeImpl<Tuple, index + 1, length>::call(
-                tuple, std::forward<Callable>(callable), std::forward<Args>(innerArgs)...
+            return FoldInvokeImpl<Tuple, index + 1, length>::call(
+                tuple,
+                std::forward<Callable>(callable)
             );
-        }, args...);
+        });
     }
 };
 
 template<typename Tuple, std::size_t length>
 struct FoldInvokeImpl<Tuple, length, length>
 {
-    static_assert(std::tuple_size<Tuple>::value == length, "The length parameter should be the length of the tuple.");
-
-    template<typename Callable, typename ...Args>
-    static decltype(auto) call(Tuple&, Callable&& callable, Args&&... args)
+    template<typename Callable>
+    static decltype(auto) call(Tuple&, Callable&& callable)
     {
-        return std::forward<Callable>(callable)(std::forward<Args>(args)...);
+        return std::forward<Callable>(callable)();
     }
 };
 
-template<typename Tuple, typename Callable, typename ...Args>
-decltype(auto) foldInvoke(Tuple& tuple, Callable&& callable, Args&&... args)
+template<typename Tuple, typename Callable>
+decltype(auto) foldInvoke(Tuple& tuple, Callable&& callable)
 {
     return FoldInvokeImpl<Tuple, 0, std::tuple_size<Tuple>::value>::call(
-        tuple, std::forward<Callable>(callable), std::forward<Args>(args)...
-    );
+        tuple, std::forward<Callable>(callable));
 };
 
 template<typename Tuple, std::size_t... I, typename ...Args>
