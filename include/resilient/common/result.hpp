@@ -36,17 +36,25 @@ bool isFailure(const T& result)
     return boost::apply_visitor(detail::IsType<Failure>(), result);
 }
 
-template<typename T>
+template<typename Result>
+const Result& getResult(const boost::variant<Failure, Result>& result)
+{
+    return boost::strict_get<Result>(result);
+}
+
+template<typename Result>
 struct ResultTraits
 {
-    using type = boost::variant<Failure, T>;
+    using type = boost::variant<Failure, Result>;
+    using result_type = Result;
     static constexpr bool is_result_type = false;
 };
 
-template<typename ...Args>
-struct ResultTraits<boost::variant<Failure, Args...>>
+template<typename Result>
+struct ResultTraits<boost::variant<Failure, Result>>
 {
-    using type = boost::variant<Failure, Args...>;
+    using type = boost::variant<Failure, Result>;
+    using result_type = Result;
     static constexpr bool is_result_type = true;
 };
 

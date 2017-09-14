@@ -1,7 +1,7 @@
 #ifndef RESILIENT_RESILIENT_MAIN_H
 #define RESILIENT_RESILIENT_MAIN_H
 
-#include <resilient/failure_detection.hpp>
+#include <resilient/failures/failure_detection.hpp>
 #include <type_traits>
 #include <utility>
 #include <tuple>
@@ -11,32 +11,6 @@ namespace resilient {
 template<typename ...Exceptions>
 struct Throws {};
 
-template<typename T>
-struct Returns
-{
-    T d_failureValue;
-
-    Returns(T&& faliureValue)
-    : d_failureValue(std::forward<T>(faliureValue))
-    { }
-
-    // Types of failure detector: throws, return, ...
-
-    // i'd prefer an interface, but needs to be a template on the return type at least
-    // how to go around it?
-    // NOTE callable always return a CallResult
-    template<typename C, typename ...Args>
-    auto operator()(C&& callable, Args&&... args) -> decltype(callable(std::forward<Args>(args)...))
-    {
-        // TODO we image this failure detector is based on return type.
-        // The system in reality needs to be expandable
-        auto cr = callable(std::forward<Args>(args)...);
-        cr.failure = cr.failure || (*cr.result == d_failureValue);
-        return std::move(cr);
-        // TODO callable can be a FailureDetector (wrapped in a lambda).
-        // Specialize on the return type CallResult to OR the failure condition
-    }
-};
 
 template<typename FailureDetector>
 class RetryPolicyImpl : private FailureDetector
