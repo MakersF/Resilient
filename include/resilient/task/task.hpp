@@ -4,30 +4,36 @@
 #include <tuple>
 #include <type_traits>
 #include <resilient/common/failable.hpp>
-#include <resilient/common/result.hpp>
 #include <resilient/common/utilities.hpp>
 #include <resilient/common/foldinvoke.hpp>
-#include <resilient/failures/failure_detection.hpp>
 #include <resilient/policies/pipeline.hpp>
 
 namespace resilient {
+
+class NoFailureCondition { };
 
 template<typename Callable, typename FailureCondition>
 class Task
 {
 public:
-    // TODO enable_if FailureCondition == DefaultCondition
     template<typename NewFailureCondition>
     Task<Callable, NewFailureCondition> failsIf(NewFailureCondition&& condition) &&
     {
+        static_assert(std::is_same<FailureCondition, NoFailureCondition>::value,
+            "The Task already has a failure condition.");
+
         return Task<Callable, NewFailureCondition>(
-            std::move(d_callable),
+            std::forward<Callable>(d_callable),
             std::forward<NewFailureCondition>(condition));
     }
 
-    template<typename ...Args>
+    template<typename ...Args,
+             typename = std::enable_if_t< !std::is_same<FailureCondition, void>::value > >
     decltype(auto) operator()(Args&&... args) &&
     {
+        static_assert(!std::is_same<FailureCondition, NoFailureCondition>::value,
+            "The Task does not have a failure condition.");
+
         // TODO Task job is to create a Failable from the function.
         // it means it should get the result of the call (or catch the exception)
         // and wrap it in a failable.
@@ -45,11 +51,10 @@ private:
     FailureCondition d_failureDetector;
 };
 
-// TODO define a default failure. Possibly something that does nothing
 template<typename Callable>
-Task<Callable, int> task(Callable&& callable)
+Task<Callable, NoFailureCondition> task(Callable&& callable)
 {
-    return Task<Callable, int>(std::forward<Callable>(callable), 12345);
+    return Task<Callable, NoFailureCondition>(std::forward<Callable>(callable), NoFailureCondition());
 }
 
 }

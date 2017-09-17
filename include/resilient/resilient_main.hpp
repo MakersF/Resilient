@@ -1,6 +1,7 @@
 #ifndef RESILIENT_RESILIENT_MAIN_H
 #define RESILIENT_RESILIENT_MAIN_H
 
+#if 0
 #include <resilient/failures/failure_detection.hpp>
 #include <type_traits>
 #include <utility>
@@ -45,7 +46,6 @@ public:
 private:
 };
 
-#if 0
 using RetryPolicy = RetryPolicyImpl<resilient::FailureDetector<>>;
 
 class ResilientJob
@@ -58,7 +58,7 @@ public:
         return RetryPolicy();
     }
 };
-#endif
 
 }
+#endif
 #endif

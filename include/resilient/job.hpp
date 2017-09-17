@@ -3,10 +3,8 @@
 #include <utility>
 #include <tuple>
 #include <type_traits>
-#include <resilient/common/result.hpp>
 #include <resilient/common/utilities.hpp>
 #include <resilient/common/foldinvoke.hpp>
-#include <resilient/failures/failure_detection.hpp>
 #include <resilient/policies/pipeline.hpp>
 
 namespace resilient {
@@ -67,9 +65,10 @@ private:
     FailureDetector d_failureDetector;
 };
 
+/*
 inline Job<NoopPolicy, FailureDetector<>> job()
 {
     return Job<NoopPolicy, FailureDetector<>>(NoopPolicy(), noDetector());
-}
+}*/
 
 }

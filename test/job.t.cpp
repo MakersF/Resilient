@@ -1,5 +1,6 @@
 #include <resilient/job.hpp>
 #include <resilient/task/task.hpp>
+#include <resilient/failures/never.hpp>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -10,9 +11,9 @@ using namespace resilient;
 
 TEST(test, test4)
 {
-    RetryPolicy rp{3};
-    auto fun = []() { std::cout << "A" << std::endl; return 1;};
+    //RetryPolicy rp{3};
+    //auto fun = []() { std::cout << "A" << std::endl; return 1;};
     //auto ret = job().with(rp).run(task(fun));
-    auto ret = rp(task(fun));
+    //auto ret = rp(task(fun).failsIf(Never()));
     //decltype(ret)::aa;
 }

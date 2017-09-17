@@ -4,7 +4,7 @@
 #include <gmock/gmock.h>
 #include <type_traits>
 
-#include "resilient/common/result.hpp"
+#include "resilient/common/failable.hpp"
 
 using namespace resilient;
 
@@ -19,7 +19,6 @@ TEST(test, test1)
     static_assert(std::is_same<decltype(fd1), FailureDetector<Returns<int>>>::value, "Wrong Type");
     auto fd2 = std::move(fd1).addFailureCondition(Returns<int>(22));
     static_assert(std::is_same<decltype(fd2), FailureDetector<Returns<int>, Returns<int>>>::value, "Wrong Type");
-#endif
     struct T
     {
         int a=11;
@@ -28,11 +27,12 @@ TEST(test, test1)
 
     auto ret = Returns<int>(11);
     auto detector = failsIf(ret)
-                    .orIf(Returns<int>(22));
+    .orIf(Returns<int>(22));
     //auto result = detector.detectFailure([](){ return 12; });
     auto result = detector.detectFailure(T());
     static_assert(std::is_same<boost::variant<Failure, int&>, decltype(result)>::value, "not same");
     EXPECT_TRUE(isFailure(result));
+#endif
 }
 
 TEST(test, test2)

@@ -13,7 +13,6 @@ namespace resilient {
 
 namespace detail {
 
-/*
 template<typename T>
 class IsType
     : public boost::static_visitor<bool>
@@ -31,8 +30,11 @@ public:
         return false;
     }
 };
-*/
+
 } // namespace detail
+
+// TODO remove when the failure type is defined by the failure detector
+struct Failure {};
 
 template<typename Failure, typename T>
 struct Failable : public boost::variant<Failure, T>
@@ -45,12 +47,9 @@ public:
 };
 
 template<typename Failure, typename T>
-using failable_t = Failable<Failure, T>;
-
-template<typename Failure, typename T>
-failable_t<Failure, T> make_failable(T&& value)
+Failable<Failure, T> make_failable(T&& value)
 {
-    return failable_t<Failure, T>{std::forward<T>(value)};
+    return Failable<Failure, T>{std::forward<T>(value)};
 }
 
 template<typename Failable>
@@ -63,7 +62,7 @@ struct FailableTraits
 template<typename Failure, typename T>
 struct FailableTraits<Failable<Failure, T>>
 {
-    using FailableType = failable_t<Failure, T>;
+    using FailableType = Failable<Failure, T>;
 
     static constexpr bool is_failable = true;
 
@@ -109,5 +108,11 @@ struct FailableTraits<Failable<Failure, T> &&> : FailableTraits<Failable<Failure
 
 template<typename Failure, typename T>
 struct FailableTraits<Failable<Failure, T> const &&> : FailableTraits<Failable<Failure, T>> { };
+
+template<typename Failable>
+auto traits(const Failable&)
+{
+    return FailableTraits<std::decay_t<Failable>>();
+}
 
 }
