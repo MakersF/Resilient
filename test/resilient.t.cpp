@@ -22,7 +22,7 @@ TEST(test, test1)
 #endif
     struct T
     {
-        int a=12;
+        int a=11;
         int& operator()() {return a;}
     };
 

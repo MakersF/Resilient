@@ -9,33 +9,10 @@
 
 namespace resilient {
 
-namespace detail {
-
-struct TransformCallToFailable
-{
-    template<typename Callable, typename ...Args>
-    // use auto so that we always return a value (no references)
-    // as we don't want to have dangling references.
-    // If the parent function returns a lval reference then the FailableResult
-    // will contain a reference, otherwise a value.
-    auto operator()(Callable&& callable, Args&&... args)
-    {
-        // TODO catch exceptions
-        using ResultType = std::result_of_t<Callable(Args...)>;
-        static_assert(not std::is_rvalue_reference<ResultType>::value,
-            "Functions returning rvalue references are not supported.");
-        using FailableResult = typename ResultTraits<ResultType>::type;
-        ResultType result = std::forward<Callable>(callable)(std::forward<Args>(args)...);
-        return FailableResult{std::forward<ResultType>(result)};
-    }
-};
-
-}
-
 template<typename ...FailureConditions>
 class FailureDetector
 {
-protected:
+public:
     template<typename FailureCondition>
     struct after_adding
     {
@@ -43,12 +20,11 @@ protected:
     };
 
     template<typename FailureCondition>
-    using after_adding_t = typename after_adding<FailureCondition>::type;
+    using after_adding_t = FailureDetector<FailureConditions..., FailureCondition>; //typename after_adding<FailureCondition>::type;
 
-public:
     template<typename FailureCondition>
     after_adding_t<FailureCondition>
-    orIf(FailureCondition&& failureCondition) &&
+    addCondition(FailureCondition&& failureCondition) &&
     {
         return after_adding_t<FailureCondition>(
             std::tuple_cat(
@@ -58,31 +34,27 @@ public:
         );
     }
 
-    template<typename C, typename ...Args>
-    decltype(auto) detectFailure(C&& callable, Args&&... args)
+    // Callable must return a Failable
+    template<typename Callable, typename ...Args>
+    decltype(auto) operator()(Callable&& callable, Args&&... args)
     {
         // TODO rewrite to be iterative.
         // refactor so that a failure condition defines a pre/post and return whether it failed or not
         return foldInvoke(
             d_failureConditions,
-            detail::TransformCallToFailable(),
-            std::forward<C>(callable),
+            std::forward<Callable>(callable),
             std::forward<Args>(args)...
         );
     }
 
-private:
-    std::tuple<FailureConditions...> d_failureConditions;
 
     explicit FailureDetector(std::tuple<FailureConditions...>&& failureConditions)
     : d_failureConditions(std::move(failureConditions))
     { }
 
-    template<typename ...T>
-    friend class FailureDetector;
+private:
 
-    template<typename T>
-    friend FailureDetector<T> failsIf(T&&);
+    std::tuple<FailureConditions...> d_failureConditions;
 };
 
 template<typename FailureCondition>
@@ -90,6 +62,11 @@ FailureDetector<FailureCondition> failsIf(FailureCondition&& condition)
 {
     return FailureDetector<FailureCondition>(
         std::tuple<FailureCondition>(std::forward<FailureCondition>(condition)));
+}
+
+inline FailureDetector<> noDetector()
+{
+    return FailureDetector<>(std::tuple<>());
 }
 
 

@@ -6,10 +6,9 @@
 #include <resilient/common/result.hpp>
 #include <resilient/common/utilities.hpp>
 #include <resilient/common/foldinvoke.hpp>
+#include <iostream>
 
 namespace resilient {
-
-namespace pipeline {
 
 template<typename Policy>
 struct PolicyTraits
@@ -55,33 +54,33 @@ public:
         return foldInvoke(std::move(d_policies), std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
-private:
-    std::tuple<Policies...> d_policies;
-
-protected:
     explicit Pipeline(std::tuple<Policies...>&& policies)
     : d_policies(std::move(policies))
     { }
 
-    template<typename ...T>
-    friend class Pipeline;
-
-    template<typename Policy>
-    friend Pipeline<Policy> of(Policy&& policy);
+private:
+    std::tuple<Policies...> d_policies;
 };
 
 
 template<typename Policy>
-Pipeline<Policy> of(Policy&& policy)
+Pipeline<Policy> pipelineOf(Policy&& policy)
 {
     static_assert(PolicyTraits<Policy>::is_valid_policy, "Not a valid policy");
     return Pipeline<Policy>(std::tuple<Policy>(std::forward<Policy>(policy)));
 }
 
-} // pipeline
-
 
 ///////////////////////////////////////////////////////
+
+struct NoopPolicy
+{
+    template<typename Job, typename ...Args>
+    decltype(auto) operator()(Job&& job, Args&&... args)
+    {
+        return std::forward<Job>(job)(FWD(args)...);
+    }
+};
 
 struct RetryPolicy
 {

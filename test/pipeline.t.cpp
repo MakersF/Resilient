@@ -26,7 +26,7 @@ TEST(test, test3)
     Monitor mntr;
 
     // TODO make it work with free functions
-    pipeline::of(rp)
+    pipelineOf(rp)
     .then(cb)
     .then(mntr)
     .then(CircuitBreak{true})(l1, a, b);
