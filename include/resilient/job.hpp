@@ -1,46 +1,39 @@
 #pragma once
 
 #include <utility>
-#include <tuple>
 #include <type_traits>
-#include <resilient/common/utilities.hpp>
-#include <resilient/common/foldinvoke.hpp>
-#include <resilient/policies/pipeline.hpp>
+#include <resilient/policies/noop.hpp>
 
 namespace resilient {
 
-template<typename Policy, typename FailureDetector>
+template<typename Policy>
 class Job
 {
 public:
-    // TODO
-    // decide how to add failure detectors to the job
-
-
-    // TODO enable only if Policy is the Noop One?
-    template<typename NewPolicy>
-    Job<NewPolicy, FailureDetector> with(NewPolicy&& policy) &
+    template<typename NewPolicy,
+             typename = std::enable_if_t<
+                std::is_same<
+                    std::decay_t<NewPolicy>,
+                    Noop>::value>>
+    Job<NewPolicy> with(NewPolicy&& policy) &
     {
-        return Job<NewPolicy, FailureDetector>(
-            std::forward<NewPolicy>(policy), d_failureDetector);
+        return Job<NewPolicy>(std::forward<NewPolicy>(policy));
     }
 
-    template<typename NewPolicy>
-    Job<NewPolicy, FailureDetector> with(NewPolicy&& policy) &&
+    template<typename NewPolicy
+             typename = std::enable_if_t<
+             std::is_same<
+                 std::decay_t<NewPolicy>,
+                 Noop>::value>>
+    Job<NewPolicy> with(NewPolicy&& policy) &&
     {
-        return Job<NewPolicy, FailureDetector>(
-            std::forward<NewPolicy>(policy), std::move(d_failureDetector));
+        return Job<NewPolicy>(std::forward<NewPolicy>(policy));
     }
 
     template<typename Callable, typename ...Args>
     decltype(auto) run(Callable&& callable, Args&&... args) &
     {
-        return d_policy(
-            [this](auto&&... innerArgs) mutable {
-                return this->d_failureDetector.detectFailure(std::forward<decltype(innerArgs)>(innerArgs)...);
-            },
-            std::forward<Callable>(callable),
-            std::forward<Args>(args)...);
+        return d_policy(std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
     template<typename Callable, typename ...Args>
@@ -54,21 +47,18 @@ public:
             std::forward<Args>(args)...);
     }
 
-    explicit Job(Policy&& policy, FailureDetector&& failureDetector)
+    explicit Job(Policy&& policy)
     : d_policy(std::forward<Policy>(policy))
-    , d_failureDetector(std::forward<FailureDetector>(failureDetector))
     { }
 
 private:
-
     Policy d_policy;
-    FailureDetector d_failureDetector;
 };
 
-/*
-inline Job<NoopPolicy, FailureDetector<>> job()
+
+inline Job<NoopPolicy> job()
 {
-    return Job<NoopPolicy, FailureDetector<>>(NoopPolicy(), noDetector());
-}*/
+    return Job<NoopPolicy>(NoopPolicy());
+}
 
 }

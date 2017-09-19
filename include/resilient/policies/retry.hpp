@@ -9,6 +9,7 @@ namespace resilient {
 
 class RetryPolicy
 {
+// TODO implement properly
 public:
     RetryPolicy(int numRetries) : d_retries(numRetries) { }
 

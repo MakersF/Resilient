@@ -3,6 +3,8 @@
 #include <utility>
 #include <tuple>
 #include <type_traits>
+#include <exception>
+
 #include <resilient/common/failable.hpp>
 #include <resilient/common/utilities.hpp>
 #include <resilient/common/foldinvoke.hpp>
@@ -27,18 +29,26 @@ public:
             std::forward<NewFailureCondition>(condition));
     }
 
-    template<typename ...Args,
-             typename = std::enable_if_t< !std::is_same<FailureCondition, void>::value > >
+    template<typename ...Args>
     decltype(auto) operator()(Args&&... args) &&
     {
         static_assert(!std::is_same<FailureCondition, NoFailureCondition>::value,
             "The Task does not have a failure condition.");
 
-        // TODO Task job is to create a Failable from the function.
+        // TODO Task create a Failable from the function.
         // it means it should get the result of the call (or catch the exception)
         // and wrap it in a failable.
         // With the failable it should call the detector to see if it matches a condition.
-        return make_failable<Failure>(std::forward<Callable>(d_callable)(std::forward<Args>(args)...));
+        try
+        {
+            auto&& result = std::forward<Callable>(d_callable)(std::forward<Args>(args)...);
+            return make_failable<std::exception_ptr>(std::move(result));
+        }
+        catch (...)
+        {
+            using Result = std::result_of_t<Callable(Args...)>;
+            return failure<Result>(std::current_exception());
+        }
     }
 
     Task(Callable&& callable, FailureCondition&& condition)

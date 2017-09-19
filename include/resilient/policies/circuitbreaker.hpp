@@ -9,6 +9,7 @@ namespace resilient {
 
 class CircuitBreaker
 {
+// TODO implement properly
 public:
     CircuitBreaker(bool open = false) : d_open(open) { }
 
