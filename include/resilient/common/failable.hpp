@@ -37,58 +37,81 @@ public:
 
 } // namespace detail
 
-template<typename Failure, typename T>
-class Failable
+template<typename Failure, typename Value>
+struct failable_tag
+{
+    static constexpr bool is_failable = true;
+
+    using failure_type = Failure;
+    using value_type = Value;
+};
+
+template<typename Failure, typename Value>
+class Failable : public failable_tag<Failure, Value>
 {
     // if we derive publicly from boost::variant some weird overload resolution failures error come up
     // when using gtest
 private:
     template<typename Class>
-    static constexpr bool is_failable = std::is_same<std::decay_t<Class>, Failable>::value;
+    static constexpr bool is_this_failable = std::is_same<std::decay_t<Class>, Failable>::value;
 
 public:
     template<typename = std::enable_if_t<std::is_default_constructible<Failure>::value>>
     Failable() : d_data() { }
 
     // Constructors
-    template<typename Other,
-             typename std::enable_if_t<is_failable<Other>, void*> = nullptr>
-    Failable(Other&& failable)
-    : d_data(forward_as<Other>(failable.d_data))
+    template<typename OtherFailable,
+             typename std::enable_if_t<is_this_failable<OtherFailable>, void*> = nullptr>
+    Failable(OtherFailable&& failable)
+    : d_data(move_if_rvalue<OtherFailable>(failable.d_data))
     { }
 
     template<typename Other,
-             typename std::enable_if_t<!is_failable<Other>, void*> = nullptr>
+             typename std::enable_if_t<!is_this_failable<Other>, void*> = nullptr>
     Failable(Other&& value)
     : d_data(std::forward<Other>(value))
     { }
 
-    // Assignments
-    template<typename Other,
-             typename std::enable_if_t<is_failable<Other>, void*> = nullptr>
-    Failable& operator=(Other&& failable)
+    template<typename OtherFailable,
+             typename std::enable_if_t<is_this_failable<OtherFailable>, void*> = nullptr>
+    Failable& operator=(OtherFailable&& failable)
     {
-        d_data = forward_as<Other>(failable.d_data);
+        d_data = move_if_rvalue<OtherFailable>(failable.d_data);
         return *this;
     }
 
     template<typename Other,
-             typename std::enable_if_t<!is_failable<Other>, void*> = nullptr>
+             typename std::enable_if_t<!is_this_failable<Other>, void*> = nullptr>
     Failable& operator=(Failure&& failure)
     {
         d_data = std::forward<Other>(failure);
         return *this;
     }
 
+    bool isFailure() const { return boost::apply_visitor(detail::IsType<Failure>(), d_data); }
+
+    bool isValue() const { return !isFailure(); }
+
+    const Value& value() const &
+    {
+        assert(isValue());
+        return boost::strict_get<Value>(d_data);
+    }
+
+    Value& value() &
+    {
+        assert(isValue());
+        return boost::strict_get<Value>(d_data);
+    }
+
+    Value value() &&
+    {
+        assert(isValue());
+        return boost::strict_get<Value>(std::move(d_data));
+    }
+
 private:
-    boost::variant<Failure, T> d_data;
-
-    boost::variant<Failure, T>& operator*() & { return d_data; }
-    const boost::variant<Failure, T>& operator*() const & { return d_data; }
-    boost::variant<Failure, T>&& operator*() && { return std::move(d_data); }
-
-    template<typename>
-    friend struct FailableTraits;
+    boost::variant<Failure, Value> d_data;
 };
 
 template<typename Failure, typename T>
@@ -97,76 +120,25 @@ Failable<Failure, T> make_failable(T&& value)
     return Failable<Failure, T>(std::forward<T>(value));
 }
 
+/// Create a failure given a failable type (needs default construction Failable)
+template<typename Failable>
+Failable failure_for()
+{
+    static_assert(Failable::is_failable, "The type must be a failable");
+    return Failable();
+}
+
+template<typename Failure, typename T>
+Failable<Failure, T> failure()
+{
+    return Failable<Failure, T>();
+}
+
+// Note: the template arguments are switched so that the user passes only the type of the value
 template<typename T, typename Failure>
 Failable<Failure, T> failure(Failure&& failure)
 {
     return Failable<Failure, T>(std::forward<Failure>(failure));
-}
-
-template<typename Failable>
-struct FailableTraits
-{
-    static constexpr bool is_failable = false;
-};
-
-// Value specialization (both constness)
-template<typename Failure, typename T>
-struct FailableTraits<Failable<Failure, T>>
-{
-    // TODO move everything as a free function
-    using FailableType = Failable<Failure, T>;
-
-    static constexpr bool is_failable = true;
-
-    static inline bool isFailure(const FailableType& failable)
-    {
-        return boost::apply_visitor(detail::IsType<Failure>(), *failable);
-    }
-
-    static inline bool isSuccess(const FailableType& failable)
-    {
-        return !isFailure(failable);
-    }
-
-    static inline const T& getValue(const FailableType& failable)
-    {
-        assert(isSuccess(failable));
-        return boost::strict_get<T>(*failable);
-    }
-
-    static inline T getValue(FailableType&& failable)
-    {
-        assert(isSuccess(failable));
-        return boost::strict_get<T>(*std::move(failable));
-    }
-
-    static FailableType failure()
-    {
-        return FailableType();
-    }
-};
-
-template<typename Failure, typename T>
-struct FailableTraits<Failable<Failure, T> const > : FailableTraits<Failable<Failure, T>> { };
-
-// Lvalue references specialization (both constness)
-template<typename Failure, typename T>
-struct FailableTraits<Failable<Failure, T> &> : FailableTraits<Failable<Failure, T>> { };
-
-template<typename Failure, typename T>
-struct FailableTraits<Failable<Failure, T> const &> : FailableTraits<Failable<Failure, T>> { };
-
-// Rvalue references specialization (both constness)
-template<typename Failure, typename T>
-struct FailableTraits<Failable<Failure, T> &&> : FailableTraits<Failable<Failure, T>> { };
-
-template<typename Failure, typename T>
-struct FailableTraits<Failable<Failure, T> const &&> : FailableTraits<Failable<Failure, T>> { };
-
-template<typename Failable>
-auto traits(const Failable&)
-{
-    return FailableTraits<std::decay_t<Failable>>();
 }
 
 }

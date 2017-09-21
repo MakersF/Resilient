@@ -21,7 +21,7 @@ private:
     using PolicyResult = std::result_of_t<Policy(FunReturningFailable)>;
 
 public:
-    static constexpr bool is_policy = FailableTraits<PolicyResult>::is_failable;
+    static constexpr bool is_policy = PolicyResult::is_failable;
 };
 
 template<typename ...Policies>

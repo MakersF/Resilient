@@ -17,16 +17,15 @@ public:
     auto operator()(Job&& job, Args&&... args)
     {
         using ResultType = std::result_of_t<Job(Args&&...)>;
-        using FT = FailableTraits<ResultType>;
         for(int i = 0; i < d_retries; ++i)
         {
             auto&& result = job(FWD(args)...);
-            if(FT::isSuccess(result))
+            if(result.isValue())
             {
                 return std::move(result);
             }
         }
-        return FT::failure();
+        return failure_for<ResultType>();
     }
 
 private:

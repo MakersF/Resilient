@@ -16,8 +16,6 @@ namespace {
 struct FailureType {};
 
 using FailableType = Failable<FailureType, int>;
-using FT = FailableTraits<FailableType>;
-
 
 class Callable
 {
@@ -47,34 +45,34 @@ TEST_F(Policies, Noop)
     Noop noop;
     auto result = noop(d_callable);
 
-    EXPECT_TRUE(FT::isSuccess(result));
-    EXPECT_EQ(FT::getValue(result), 0);
+    EXPECT_TRUE(result.isValue());
+    EXPECT_EQ(result.value(), 0);
 }
 
 TEST_F(Policies, RetryPolicySuccessAfterFewTries)
 {
     testing::Sequence s;
     EXPECT_CALL(d_callable, call())
-        .WillOnce(testing::Return(FT::failure()))
-        .WillOnce(testing::Return(FT::failure()))
-        .WillOnce(testing::Return(FT::failure()))
+        .WillOnce(testing::Return(failure_for<FailableType>()))
+        .WillOnce(testing::Return(failure_for<FailableType>()))
+        .WillOnce(testing::Return(failure_for<FailableType>()))
         .WillOnce(testing::Return(make_failable<FailureType>(1)));
 
     RetryPolicy retry(5);
 
     auto result = retry(d_callable);
-    EXPECT_TRUE(FT::isSuccess(result));
-    EXPECT_EQ(FT::getValue(result), 1);
+    EXPECT_TRUE(result.isValue());
+    EXPECT_EQ(result.value(), 1);
 }
 
 TEST_F(Policies, RetryPolicyNeverSucceeds)
 {
     EXPECT_CALL(d_callable, call())
         .Times(3)
-        .WillRepeatedly(testing::Return(FT::failure()));
+        .WillRepeatedly(testing::Return(failure_for<FailableType>()));
 
     RetryPolicy retry(3);
 
     auto result = retry(d_callable);
-    EXPECT_TRUE(FT::isFailure(result));
+    EXPECT_TRUE(result.isFailure());
 }

@@ -15,9 +15,14 @@ decltype(auto) tuple_append(Tuple&& tuple, T&& item)
 }
 
 template<typename As, typename T>
-decltype(auto)
-forward_as(T&& value)
+constexpr decltype(auto)
+move_if_rvalue(T&& value)
 {
+    static_assert(
+        not(std::is_rvalue_reference<T>::value and
+            std::is_lvalue_reference<As>::value),
+        "Forwarding an rvalue reference as a lvalue reference is not allowed.");
+    // Allowing forwarding a rval as lval might cause dangling references
      return static_cast<
          std::conditional_t<
              std::is_lvalue_reference<As>::value,

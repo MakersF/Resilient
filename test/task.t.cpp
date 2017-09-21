@@ -33,8 +33,8 @@ TEST(task, TaskReturnsFailableWithSuccess)
     auto tsk = task(callable).failsIf(None());
     auto result = std::move(tsk)();
 
-    EXPECT_TRUE(traits(result).isSuccess(result));
-    EXPECT_EQ(traits(result).getValue(result), "A test");
+    EXPECT_TRUE(result.isValue());
+    EXPECT_EQ(result.value(), "A test");
 }
 
 TEST(task, TaskReturnsFailure)
@@ -47,5 +47,5 @@ TEST(task, TaskReturnsFailure)
     auto tsk = task(callable).failsIf(None());
     auto result = std::move(tsk)();
 
-    EXPECT_TRUE(traits(result).isFailure(result));
+    EXPECT_TRUE(result.isFailure());
 }

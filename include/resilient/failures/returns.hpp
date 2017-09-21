@@ -20,12 +20,11 @@ public:
         // Return by auto (no decltype(auto)) so we don't risk passing around dangling references.
         // We move anyway.
         auto&& result = std::forward<Callable>(callable)(std::forward<Args>(args)...);
-        auto trait = traits(result);
-        static_assert(trait.is_failable, "The callable must return a Failable.");
 
-        if (trait.isFailure(result) || trait.getValue(result) == d_failureValue)
+        if (result.isFailure() || result.value() == d_failureValue)
         {
-            return trait.failure();
+            using Result = std::decay_t<decltype(result)>;
+            return failure<typename Result::failure_type, typename Result::value_type>();
         }
         else
         {
