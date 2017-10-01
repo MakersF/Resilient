@@ -1,7 +1,7 @@
-#include "resilient/policies/pipeline.hpp"
-#include "resilient/policies/circuitbreaker.hpp"
-#include "resilient/policies/retry.hpp"
-#include "resilient/policies/noop.hpp"
+#include "resilient/policy/pipeline.hpp"
+#include "resilient/policy/circuitbreaker.hpp"
+#include "resilient/policy/retry.hpp"
+#include "resilient/policy/noop.hpp"
 #include "resilient/common/failable.hpp"
 
 #include <type_traits>

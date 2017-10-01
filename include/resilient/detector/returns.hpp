@@ -1,7 +1,7 @@
 #pragma once
 
 #include <resilient/common/failable.hpp>
-#include <resilient/failures/base_failure.hpp>
+#include <resilient/detector/basedetector.hpp>
 
 namespace resilient {
 

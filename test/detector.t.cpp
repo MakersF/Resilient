@@ -1,6 +1,6 @@
-#include <resilient/failures/returns.hpp>
-#include <resilient/failures/any.hpp>
-#include <resilient/failures/never.hpp>
+#include <resilient/detector/returns.hpp>
+#include <resilient/detector/any.hpp>
+#include <resilient/detector/never.hpp>
 #include <resilient/common/failable.hpp>
 
 #include <gtest/gtest.h>

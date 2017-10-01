@@ -2,7 +2,7 @@
 
 #include <utility>
 #include <type_traits>
-#include <resilient/policies/noop.hpp>
+#include <resilient/policy/noop.hpp>
 
 namespace resilient {
 

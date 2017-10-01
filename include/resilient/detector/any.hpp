@@ -4,7 +4,7 @@
 #include <tuple>
 #include <type_traits>
 #include <resilient/common/foldinvoke.hpp>
-#include <resilient/failures/base_failure.hpp>
+#include <resilient/detector/basedetector.hpp>
 
 namespace resilient {
 

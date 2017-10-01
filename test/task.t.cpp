@@ -1,6 +1,9 @@
 #include <resilient/task/task.hpp>
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+
+#include <resilient/detector/basedetector.hpp>
 
 #include <string>
 
@@ -8,7 +11,7 @@ using namespace resilient;
 
 namespace {
 
-struct None {};
+struct None : FailureDetectorTag<> {};
 
 class Callable
 {
