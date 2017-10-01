@@ -1,8 +1,10 @@
 #pragma once
 
+#include <resilient/failures/base_failure.hpp>
+
 namespace resilient {
 
-class Never
+class Never : public FailureDetectorTag<>
 {
 public:
     template<typename Callable, typename ...Args>

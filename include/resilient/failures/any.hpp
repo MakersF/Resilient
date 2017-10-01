@@ -4,11 +4,12 @@
 #include <tuple>
 #include <type_traits>
 #include <resilient/common/foldinvoke.hpp>
+#include <resilient/failures/base_failure.hpp>
 
 namespace resilient {
 
 template<typename ...FailureConditions>
-class Any
+class Any : public FailureDetectorTag<typename std::decay_t<FailureConditions>::failure_types...>
 {
 public:
     template<typename FailureCondition>

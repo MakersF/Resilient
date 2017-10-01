@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.0)
 project(resilient CXX)
 add_compile_options(-std=c++14)
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0") # TODO remove
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+
 # set(HEADER_FILES "...")
 add_library(resilient INTERFACE)
 # target_sources(resilient INTERFACE ${HEADER_FILES})

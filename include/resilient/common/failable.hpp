@@ -56,7 +56,8 @@ private:
     static constexpr bool is_this_failable = std::is_same<std::decay_t<Class>, Failable>::value;
 
 public:
-    template<typename = std::enable_if_t<std::is_default_constructible<Failure>::value>>
+    template<typename U = Failure, // Trick required to SFINAE at method instantiation
+             typename = std::enable_if_t<std::is_default_constructible<U>::value>>
     Failable() : d_data() { }
 
     // Constructors
@@ -82,9 +83,9 @@ public:
 
     template<typename Other,
              typename std::enable_if_t<!is_this_failable<Other>, void*> = nullptr>
-    Failable& operator=(Failure&& failure)
+    Failable& operator=(Other&& value)
     {
-        d_data = std::forward<Other>(failure);
+        d_data = std::forward<Other>(value);
         return *this;
     }
 
@@ -140,5 +141,45 @@ Failable<Failure, T> failure(Failure&& failure)
 {
     return Failable<Failure, T>(std::forward<Failure>(failure));
 }
+
+template<typename ...Failures>
+class Failure
+{
+private:
+    template<typename Class>
+    static constexpr bool is_this_failure = std::is_same<std::decay_t<Class>, Failure>::value;
+
+public:
+    // Constructors
+    template<typename OtherFailure,
+             typename std::enable_if_t<is_this_failure<OtherFailure>, void*> = nullptr>
+    Failure(OtherFailure&& failure)
+    : d_data(move_if_rvalue<OtherFailure>(failure.d_data))
+    { }
+
+    template<typename Other,
+             typename std::enable_if_t<!is_this_failure<Other>, void*> = nullptr>
+    Failure(Other&& value)
+    : d_data(std::forward<Other>(value))
+    { }
+
+    template<typename OtherFailure,
+             typename std::enable_if_t<is_this_failure<OtherFailure>, void*> = nullptr>
+    Failure& operator=(OtherFailure&& failure)
+    {
+        d_data = move_if_rvalue<OtherFailure>(failure.d_data);
+        return *this;
+    }
+
+    template<typename Other,
+             typename std::enable_if_t<!is_this_failure<Other>, void*> = nullptr>
+    Failure& operator=(Other&& value)
+    {
+        d_data = std::forward<Other>(value);
+        return *this;
+    }
+private:
+    boost::variant<Failures...> d_data;
+};
 
 }

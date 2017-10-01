@@ -1,11 +1,14 @@
 #pragma once
 
 #include <resilient/common/failable.hpp>
+#include <resilient/failures/base_failure.hpp>
 
 namespace resilient {
 
+struct ErrorReturn {};
+
 template<typename T>
-class Returns
+class Returns : public FailureDetectorTag<ErrorReturn>
 {
 public:
     Returns(T&& faliureValue)
