@@ -55,4 +55,7 @@ move_if_rvalue(T&& value)
                  std::remove_reference_t<T> &&>>(value);
 }
 
+template<std::size_t N, typename ...Args>
+using argpack_element_t = std::tuple_element_t<N, std::tuple<Args...>>;
+
 }
