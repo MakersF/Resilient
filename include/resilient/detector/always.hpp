@@ -5,7 +5,9 @@
 
 namespace resilient {
 
-class Never : public FailureDetectorTag<>
+struct AlwaysError {};
+
+class Always : public FailureDetectorTag<AlwaysError>
 {
 public:
     NoState preRun()
@@ -14,7 +16,10 @@ public:
     }
 
     template<typename T>
-    void postRun(NoState, OperationResult<T>, FailureSignal<failure_types>&) { }
+    void postRun(NoState, OperationResult<T>, FailureSignal<failure_types>& signal)
+    {
+        signal.signalFailure(AlwaysError());
+    }
 };
 
 }

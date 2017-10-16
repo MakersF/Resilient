@@ -3,8 +3,6 @@
 #include <utility>
 #include <tuple>
 
-#define FWD(arg) ::std::forward<decltype(arg)>(args)
-
 namespace resilient {
 
 template<typename Tuple, typename T>

@@ -21,7 +21,7 @@ public:
         {
             return failure_for<ResultType>();
         }
-        return std::forward<Job>(job)(FWD(args)...);
+        return std::forward<Job>(job)(std::forward<Args>(args)...);
     }
 
 private:

@@ -38,6 +38,8 @@ class class_buffer // Isn't there something like this in std?
 {
 public:
     class_buffer() : is_set(false) {};
+    class_buffer(const class_buffer&) = delete;
+    class_buffer& operator=(const class_buffer&) = delete;
 
     ~class_buffer()
     {

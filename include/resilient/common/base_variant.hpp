@@ -1,11 +1,35 @@
 #pragma once
 
+#include <cassert>
+
 #include <utility>
 #include <tuple>
 #include <resilient/common/utilities.hpp>
 #include <boost/variant.hpp>
 
 namespace resilient {
+
+namespace detail {
+
+template<typename T>
+class IsType
+    : public boost::static_visitor<bool>
+{
+public:
+
+    bool operator()(const T&) const
+    {
+        return true;
+    }
+
+    template<typename Other>
+    bool operator()(const Other&) const
+    {
+        return false;
+    }
+};
+
+}
 
 template<typename Derived, typename ...Failures>
 class BaseVariant
@@ -53,6 +77,33 @@ public:
     {
         d_data = std::forward<Other>(value);
         return *static_cast<Derived*>(this);
+    }
+
+    template<typename T>
+    bool is() const
+    {
+        return boost::apply_visitor(detail::IsType<T>(), this->d_data);
+    }
+
+    template<typename T>
+    const T& get() const
+    {
+        assert(is<T>());
+        return boost::strict_get<T>(this->d_data);
+    }
+
+    template<typename T>
+    T& get()
+    {
+        assert(is<T>());
+        return boost::strict_get<T>(this->d_data);
+    }
+
+    template<typename T>
+    T&& get() &&
+    {
+        assert(is<T>());
+        return std::move(boost::strict_get<T>(this->d_data));
     }
 
 protected:

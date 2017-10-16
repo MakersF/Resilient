@@ -10,28 +10,6 @@
 
 namespace resilient {
 
-namespace detail {
-
-template<typename T>
-class IsType
-    : public boost::static_visitor<bool>
-{
-public:
-
-    bool operator()(const T&) const
-    {
-        return true;
-    }
-
-    template<typename Other>
-    bool operator()(const Other&) const
-    {
-        return false;
-    }
-};
-
-} // namespace detail
-
 template<typename Failure, typename Value>
 struct failable_tag
 {
@@ -51,26 +29,23 @@ private:
 public:
     using Base::Base;
 
-    bool isFailure() const { return boost::apply_visitor(detail::IsType<Failure>(), this->d_data); }
+    bool isFailure() const { return this->template is<Failure>(); }
 
     bool isValue() const { return !isFailure(); }
 
     const Value& value() const &
     {
-        assert(isValue());
-        return boost::strict_get<Value>(this->d_data);
+        return this->template get<Value>();
     }
 
     Value& value() &
     {
-        assert(isValue());
-        return boost::strict_get<Value>(this->d_data);
+        return this->template get<Value>();
     }
 
     Value value() &&
     {
-        assert(isValue());
-        return boost::strict_get<Value>(std::move(this->d_data));
+        return std::move(*this).template get<Value>();
     }
 };
 

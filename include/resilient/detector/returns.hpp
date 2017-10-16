@@ -1,7 +1,10 @@
 #pragma once
 
+#include <type_traits>
+
 #include <resilient/common/failable.hpp>
 #include <resilient/detector/basedetector.hpp>
+#include <resilient/detector/execution_context.hpp>
 
 namespace resilient {
 
@@ -15,23 +18,14 @@ public:
     : d_failureValue(std::forward<T>(faliureValue))
     { }
 
-    // i'd prefer an interface, but needs to be a template on the return type at least
-    // how to go around it?
-    template<typename Callable, typename ...Args>
-    auto operator()(Callable&& callable, Args&&... args)
-    {
-        // Return by auto (no decltype(auto)) so we don't risk passing around dangling references.
-        // We move anyway.
-        auto&& result = std::forward<Callable>(callable)(std::forward<Args>(args)...);
+    NoState preRun() { return NoState(); }
 
-        if (result.isFailure() || result.value() == d_failureValue)
+    template<typename Q>
+    void postRun(NoState, const OperationResult<Q>& result, FailureSignal<failure_types>& fs)
+    {
+        if(not result.isException() and d_failureValue == result.getResult())
         {
-            using Result = std::decay_t<decltype(result)>;
-            return failure<typename Result::failure_type, typename Result::value_type>();
-        }
-        else
-        {
-            return std::move(result);
+            fs.signalFailure(ErrorReturn());
         }
     }
 

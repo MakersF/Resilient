@@ -19,7 +19,7 @@ public:
         using ResultType = std::result_of_t<Job(Args&&...)>;
         for(int i = 0; i < d_retries; ++i)
         {
-            auto&& result = job(FWD(args)...);
+            auto&& result = job(std::forward<Args>(args)...);
             if(result.isValue())
             {
                 return std::move(result);
