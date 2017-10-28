@@ -29,6 +29,94 @@ public:
     }
 };
 
+template<typename Q>
+using if_is_default_constructible = std::enable_if_t<std::is_default_constructible<Q>::value>;
+
+}
+
+template<typename Variant>
+struct variant_traits; // Specialize it for your variant type
+
+template<typename Other>
+using variant_traits_t = variant_traits<std::decay_t<Other>>;
+
+template<typename Q>
+using is_variant = is_complete_type<variant_traits_t<Q>>;
+// A type is a variant if a specialization of variant_traits exists for it.
+// If the specialization is defined than the type is complete, otherwise is
+// not complete (since by default it's not defined but only declared).
+
+template<typename Q>
+using if_is_variant = std::enable_if_t<is_variant<Q>::value, void*>;
+
+template<typename Q>
+using if_is_not_variant = std::enable_if_t<not is_variant<Q>::value, void*>;
+
+template<typename ...Types>
+class Variant
+{
+public:
+    template<typename U = argpack_element_t<0, Types...>,
+             typename = detail::if_is_default_constructible<U>>
+    Variant() {}
+
+    template<typename Self, if_is_variant<Self> = nullptr>
+    Variant(Self&& other)
+    : d_data(variant_traits_t<Self>::get_data(other)) {}
+
+    template<typename Other, if_is_not_variant<Other> = nullptr>
+    Variant(Other&& other)
+    : d_data(std::forward<Other>(other)) {}
+
+    template<typename Self, if_is_variant<Self> = nullptr>
+    Variant& operator=(Self&& other)
+    {
+        d_data = move_if_rvalue<Self>(variant_traits_t<Self>::get_data(other));
+        return *this;
+    }
+
+    template<typename Other, if_is_not_variant<Other> = nullptr>
+    Variant& operator=(Other&& other)
+    {
+        d_data = std::forward<Other>(other);
+        return *this;
+    }
+
+private:
+    boost::variant<Types...> d_data;
+
+    template<typename ...OtherTypes>
+    friend class Variant;
+
+    friend class variant_traits<Variant>;
+};
+
+template<typename ...Types>
+struct variant_traits<Variant<Types...>>
+{
+    template<typename V>
+    static same_const_ref_as_t<V, boost::variant<Types...>> get_data(V&& variant)
+    {
+        return move_if_rvalue<V>(variant.d_data);
+    }
+};
+
+template<typename T, typename Variant, if_is_variant<Variant> = nullptr>
+bool holds_alternative(Variant&& variant)
+{
+    return boost::apply_visitor(
+        detail::IsType<T>(),
+        variant_traits_t<Variant>::get_data(variant));
+}
+
+template<typename T, typename Variant, if_is_variant<Variant> = nullptr>
+auto get(Variant&& variant) -> same_const_ref_as_t<Variant, T>
+{
+    assert(holds_alternative<T>(variant));
+    return move_if_rvalue<Variant>(
+            boost::strict_get<T>(
+                variant_traits_t<Variant>::get_data(
+                    std::forward<Variant>(variant))));
 }
 
 template<typename Derived, typename ...Failures>
