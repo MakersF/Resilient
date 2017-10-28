@@ -23,6 +23,18 @@ public:
     OperationResult(const std::exception_ptr& ptr) : Base(ptr) {}
     OperationResult(ConstRefT ref) : Base(&ref) {}
 
+    OperationResult& operator=(const std::exception_ptr& ptr)
+    {
+        (*static_cast<Base*>(this)) = ptr;
+        return *this;
+    }
+
+    OperationResult& operator=(ConstRefT ref)
+    {
+        (*static_cast<Base*>(this)) = &ref;
+        return *this;
+    }
+
     bool isException() const { return this->template is<std::exception_ptr>(); }
     ConstRefT getResult() const { return *this->template get<ConstPtrT>(); }
 
@@ -32,26 +44,26 @@ namespace detail
 {
 
 template<typename T>
-struct FailureSignalImpl
+struct IFailureSignalImpl
 {
     virtual void signalFailure(T&&) = 0;
 
-    virtual ~FailureSignalImpl() {}
+    virtual ~IFailureSignalImpl() {}
 };
 
 }
 
 template<typename ...T>
-struct FailureSignal : detail::FailureSignalImpl<T>...
+struct IFailureSignal : detail::IFailureSignalImpl<T>...
 {
-    virtual ~FailureSignal() {}
+    virtual ~IFailureSignal() {}
 };
 
 // derive from impl so that it doesn't recursively expand all the tuples
 template<typename ...T>
-struct FailureSignal<std::tuple<T...>> : detail::FailureSignalImpl<T>...
+struct IFailureSignal<std::tuple<T...>> : detail::IFailureSignalImpl<T>...
 {
-    virtual ~FailureSignal() {}
+    virtual ~IFailureSignal() {}
 };
 
 }

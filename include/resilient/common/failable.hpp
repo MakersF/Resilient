@@ -47,6 +47,21 @@ public:
     {
         return std::move(*this).template get<Value>();
     }
+
+    const Failure& failure() const &
+    {
+        return this->template get<Failure>();
+    }
+
+    Failure& failure() &
+    {
+        return this->template get<Failure>();
+    }
+
+    Failure failure() &&
+    {
+        return std::move(*this).template get<Failure>();
+    }
 };
 
 template<typename Failure, typename T>

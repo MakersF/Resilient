@@ -5,10 +5,13 @@
 #include <type_traits>
 #include <exception>
 
+#include <boost/optional.hpp>
+
 #include <resilient/common/failable.hpp>
 #include <resilient/common/utilities.hpp>
 #include <resilient/common/foldinvoke.hpp>
 #include <resilient/detector/basedetector.hpp>
+#include <resilient/detector/execution_context.hpp>
 
 
 namespace resilient {
@@ -31,50 +34,6 @@ template<typename ...T>
 struct FailureType<std::tuple<T...>>
 {
     using type = Failure<T...>;
-};
-
-template<typename T>
-class class_buffer // Isn't there something like this in std?
-{
-public:
-    class_buffer() : is_set(false) {};
-    class_buffer(const class_buffer&) = delete;
-    class_buffer& operator=(const class_buffer&) = delete;
-
-    ~class_buffer()
-    {
-        destruct();
-    }
-
-    template<typename ...Args>
-    void emplace(Args&&... args)
-    {
-        destruct();
-        new (&buffer) T(std::forward<Args>(args)...);
-        is_set = true;
-    }
-
-    T& get()
-    {
-        if (not is_set)
-        {
-            throw "Accessing buffer not set"; // TODO proper exception
-        }
-        return *reinterpret_cast<T*>(&buffer);
-    }
-
-private:
-    std::aligned_storage_t<sizeof(T), alignof(T)> buffer;
-    bool is_set;
-
-    void destruct() noexcept
-    {
-        if (is_set)
-        {
-            reinterpret_cast<T*>(&buffer)->~T();
-            is_set = false;
-        }
-    }
 };
 
 }
@@ -107,20 +66,31 @@ public:
         using Failure = typename detail::FailureType<tuple_extend_t<ExceptionFailure, FailureTypes>>::type;
         using Result = std::result_of_t<Callable(Args...)>;
         using ThisFailable = Failable<Failure, Result>;
-        detail::class_buffer<ThisFailable> buffer;
+        boost::optional<ThisFailable> buffer;
+        OperationResult<Result> operationResult;
+
+        auto state = d_failureDetector.preRun();
 
         try
         {
-            auto result = std::forward<Callable>(d_callable)(std::forward<Args>(args)...);
-            buffer.emplace(std::move(result));
+            buffer = std::forward<Callable>(d_callable)(std::forward<Args>(args)...);
+            operationResult = buffer->value();
         }
         catch (...)
         {
-            // Return a Failable with failure Failure currently set to be an exception
-            buffer.emplace(Failure(ExceptionFailure(std::current_exception())));
+            auto exception = std::current_exception();
+            buffer = Failure(ExceptionFailure(exception));
+            operationResult = exception;
         }
 
-        return std::move(buffer.get());
+        d_failureDetector.postRun(
+            std::move(state),
+            operationResult,
+            // TODO "implement the interface to set the failures". Use templates to make it simple
+            // Possible alternative is to return variant of failures in the detectors
+        );
+
+        return std::move(*buffer);
     }
 
     Task(Callable&& callable, FailureDetector&& condition)

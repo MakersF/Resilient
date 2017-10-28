@@ -13,13 +13,13 @@ using namespace resilient;
 
 using FailureExample = char;
 
-struct ReturnsFailureSignalMock : FailureSignal<Returns<int>::failure_types>
+struct ReturnsFailureSignalMock : IFailureSignal<Returns<int>::failure_types>
 {
     MOCK_METHOD1(signalFailure, void(const ErrorReturn&));
     void signalFailure(ErrorReturn&& er) { signalFailure(er); }
 };
 
-struct NeverFailureSignalMock : FailureSignal<Never::failure_types>
+struct NeverFailureSignalMock : IFailureSignal<Never::failure_types>
 {
     // Derives from an empty interface
 };

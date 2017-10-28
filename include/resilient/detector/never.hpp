@@ -14,7 +14,7 @@ public:
     }
 
     template<typename T>
-    void postRun(NoState, OperationResult<T>, FailureSignal<failure_types>&) { }
+    void postRun(NoState, const OperationResult<T>&, IFailureSignal<failure_types>&) { }
 };
 
 }
