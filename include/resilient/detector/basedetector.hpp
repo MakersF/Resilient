@@ -14,4 +14,10 @@ struct FailureDetectorTag
     using failure = Variant<NoFailure, FailureTypes...>;
 };
 
+template<typename Failure>
+bool holds_failure(Failure&& failure)
+{
+    return not holds_alternative<NoFailure>(failure);
+}
+
 }

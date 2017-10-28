@@ -21,7 +21,7 @@ struct DetectorMock : FailureDetectorTag<FailureMock> // Test with empty and wit
         return NoState();
     }
 
-    MOCK_METHOD2(postRun, failure(NoState, const OperationResult<ResultType>&));
+    MOCK_METHOD2(postRun, failure(NoState, ICallResult<ResultType>&));
 };
 
 class Callable
@@ -61,7 +61,10 @@ TEST_F(Task_F, TaskReturnsFailureIfDetected)
     .WillOnce(testing::Return("A test"));
 
     EXPECT_CALL(d_detector, postRun(testing::_, testing::_))
-    .WillOnce(testing::Return(FailureMock()));
+    .WillOnce(testing::Invoke([](NoState, ICallResult<ResultType>& result){
+        result.consumeException();
+        return FailureMock();
+    }));
 
     auto tsk = task(d_callable).failsIf(d_detector);
     auto result = std::move(tsk)();

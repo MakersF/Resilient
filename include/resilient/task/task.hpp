@@ -77,7 +77,7 @@ public:
             _Failable result{std::forward<Callable>(d_callable)(std::forward<Args>(args)...)};
             operationResult = result.value();
             decltype(auto) failure{d_failureDetector.postRun(std::move(state), operationResult)};
-            if(not holds_alternative<NoFailure>(failure))
+            if(holds_failure(failure))
             {
                 result = std::move(failure);
             }
@@ -89,12 +89,20 @@ public:
             // TODO how to check if the exception was consumed?
             // Option: put in OperationResult
             decltype(auto) failure{d_failureDetector.postRun(std::move(state), operationResult)};
-            // TODO TBD
-            // - check if the failure is set (not NoFailure)
-            // - return the failure if is detected
-            // - otherise ??
-            //     - maybe check if the exception was consumed
-            throw 1;
+            if(holds_failure(failure))
+            {
+                return _Failable{std::move(failure)};
+            }
+            if(not operationResult.isExceptionConsumed())
+            {
+                std::rethrow_exception(operationResult.getException());
+            }
+            else
+            {
+                // The exception was consumed but no failure was reported? Likely a bug.
+                // We have no result and no failure and no exception.
+                throw 1; // TODO proper type
+            }
         }
     }
 
