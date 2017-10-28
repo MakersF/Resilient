@@ -12,31 +12,27 @@ struct NoState {};
 
 template<typename T>
 class OperationResult
-: private BaseVariant<OperationResult<T>, std::exception_ptr, const std::decay_t<T>*>
 {
 private:
     using ConstRefT = const std::decay_t<T>&;
     using ConstPtrT = const std::decay_t<T>*;
-    using Base = BaseVariant<OperationResult<T>, std::exception_ptr, ConstPtrT>;
+    using Base = Variant<std::exception_ptr, ConstPtrT>;
+
+    Base d_data;
 public:
     OperationResult() = default;
-    OperationResult(const std::exception_ptr& ptr) : Base(ptr) {}
-    OperationResult(ConstRefT ref) : Base(&ref) {}
+    OperationResult(const std::exception_ptr& ptr) : d_data(ptr) {}
+    OperationResult(ConstRefT ref) : d_data(&ref) {}
 
-    OperationResult& operator=(const std::exception_ptr& ptr)
+    bool isException() const
     {
-        (*static_cast<Base*>(this)) = ptr;
-        return *this;
+        return holds_alternative<std::exception_ptr>(d_data);
     }
 
-    OperationResult& operator=(ConstRefT ref)
+    ConstRefT getResult() const
     {
-        (*static_cast<Base*>(this)) = &ref;
-        return *this;
+        return *get<ConstPtrT>(d_data);
     }
-
-    bool isException() const { return this->template is<std::exception_ptr>(); }
-    ConstRefT getResult() const { return *this->template get<ConstPtrT>(); }
 
 };
 

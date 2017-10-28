@@ -33,7 +33,7 @@ struct FailureType;
 template<typename ...T>
 struct FailureType<std::tuple<T...>>
 {
-    using type = Failure<T...>;
+    using type = Variant<T...>;
 };
 
 }
@@ -63,34 +63,39 @@ public:
         // it means it should get the result of the call (or catch the exception)
         // and wrap it in a failable.
         // With the failable it should call the detector to see if it matches a condition.
-        using Failure = typename detail::FailureType<tuple_extend_t<ExceptionFailure, FailureTypes>>::type;
+        using DetectorFailure = typename std::decay_t<FailureDetector>::failure;
         using Result = std::result_of_t<Callable(Args...)>;
-        using ThisFailable = Failable<Failure, Result>;
-        boost::optional<ThisFailable> buffer;
-        OperationResult<Result> operationResult;
+        using _Failable = Failable<DetectorFailure, Result>;
 
+        OperationResult<Result> operationResult;
         auto state = d_failureDetector.preRun();
+
+        // TODO possibly make here a lambda which is called by the two try brances if needed
 
         try
         {
-            buffer = std::forward<Callable>(d_callable)(std::forward<Args>(args)...);
-            operationResult = buffer->value();
+            _Failable result{std::forward<Callable>(d_callable)(std::forward<Args>(args)...)};
+            operationResult = result.value();
+            decltype(auto) failure{d_failureDetector.postRun(std::move(state), operationResult)};
+            if(not holds_alternative<NoFailure>(failure))
+            {
+                result = std::move(failure);
+            }
+            return std::move(result);
         }
         catch (...)
         {
-            auto exception = std::current_exception();
-            buffer = Failure(ExceptionFailure(exception));
-            operationResult = exception;
+            operationResult = std::current_exception();
+            // TODO how to check if the exception was consumed?
+            // Option: put in OperationResult
+            decltype(auto) failure{d_failureDetector.postRun(std::move(state), operationResult)};
+            // TODO TBD
+            // - check if the failure is set (not NoFailure)
+            // - return the failure if is detected
+            // - otherise ??
+            //     - maybe check if the exception was consumed
+            throw 1;
         }
-
-        d_failureDetector.postRun(
-            std::move(state),
-            operationResult,
-            // TODO "implement the interface to set the failures". Use templates to make it simple
-            // Possible alternative is to return variant of failures in the detectors
-        );
-
-        return std::move(*buffer);
     }
 
     Task(Callable&& callable, FailureDetector&& condition)
@@ -99,9 +104,6 @@ public:
     { }
 
 private:
-
-    using FailureTypes = typename std::decay_t<FailureDetector>::failure_types;
-
     Callable d_callable;
     FailureDetector d_failureDetector;
 };

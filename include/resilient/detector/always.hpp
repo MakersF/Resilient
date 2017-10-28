@@ -16,9 +16,9 @@ public:
     }
 
     template<typename T>
-    void postRun(NoState, const OperationResult<T>&, IFailureSignal<failure_types>& signal)
+    failure postRun(NoState, const OperationResult<T>&)
     {
-        signal.signalFailure(AlwaysError());
+        return AlwaysError();
     }
 };
 

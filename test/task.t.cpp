@@ -11,43 +11,73 @@ using namespace resilient;
 
 namespace {
 
-struct None : FailureDetectorTag<> {};
+using ResultType = std::string;
+struct FailureMock {};
+
+struct DetectorMock : FailureDetectorTag<FailureMock> // Test with empty and with multiple
+{
+    NoState preRun()
+    {
+        return NoState();
+    }
+
+    MOCK_METHOD2(postRun, failure(NoState, const OperationResult<ResultType>&));
+};
 
 class Callable
 {
 public:
-    MOCK_METHOD0(call, std::string());
+    MOCK_METHOD0(call, ResultType());
 
-    std::string operator()()
-    {
-        return call();
-    }
+    ResultType operator()() { return call(); }
+};
+
+struct Task_F : ::testing::Test
+{
+    testing::StrictMock<Callable> d_callable;
+    testing::StrictMock<DetectorMock> d_detector;
 };
 
 }
 
-TEST(task, TaskReturnsFailableWithSuccess)
+TEST_F(Task_F, TaskReturnsResultWithSuccess)
 {
-    testing::StrictMock<Callable> callable;
-
-    EXPECT_CALL(callable, call())
+    EXPECT_CALL(d_callable, call())
     .WillOnce(testing::Return("A test"));
 
-    auto tsk = task(callable).failsIf(None());
+    EXPECT_CALL(d_detector, postRun(testing::_, testing::_))
+    .WillOnce(testing::Return(NoFailure()));
+
+    auto tsk = task(d_callable).failsIf(d_detector);
     auto result = std::move(tsk)();
 
     EXPECT_TRUE(result.isValue());
     EXPECT_EQ(result.value(), "A test");
 }
 
-TEST(task, TaskReturnsFailure)
+TEST_F(Task_F, TaskReturnsFailureIfDetected)
 {
-    testing::StrictMock<Callable> callable;
+    EXPECT_CALL(d_callable, call())
+    .WillOnce(testing::Return("A test"));
 
-    EXPECT_CALL(callable, call())
+    EXPECT_CALL(d_detector, postRun(testing::_, testing::_))
+    .WillOnce(testing::Return(FailureMock()));
+
+    auto tsk = task(d_callable).failsIf(d_detector);
+    auto result = std::move(tsk)();
+
+    EXPECT_TRUE(result.isFailure());
+}
+
+TEST_F(Task_F, TaskReturnsFailureIfThrows)
+{
+    EXPECT_CALL(d_callable, call())
     .WillOnce(testing::Throw(std::runtime_error("An error")));
 
-    auto tsk = task(callable).failsIf(None());
+    EXPECT_CALL(d_detector, postRun(testing::_, testing::_))
+    .WillOnce(testing::Return(NoFailure()));
+
+    auto tsk = task(d_callable).failsIf(d_detector);
     auto result = std::move(tsk)();
 
     EXPECT_TRUE(result.isFailure());
