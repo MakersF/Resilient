@@ -18,22 +18,47 @@ namespace resilient {
 
 struct NoFailureDetector : FailureDetectorTag<> { };
 
-struct ExceptionFailure
+class UnknownTaskResult : std::runtime_error
 {
-    ExceptionFailure(std::exception_ptr ptr) : d_exception_ptr(ptr) { }
-    std::exception_ptr d_exception_ptr;
+public:
+    using std::runtime_error::runtime_error;
 };
 
 namespace detail {
 
 template<typename T>
-struct FailureType;
-
-// Extract the types from the tuple
-template<typename ...T>
-struct FailureType<std::tuple<T...>>
+class OperationResult : public ICallResult<T>
 {
-    using type = Variant<T...>;
+private:
+    using ConstRefType = const std::decay_t<T>&;
+    using ConstPtrT = const std::decay_t<T>*;
+    using Base = Variant<std::exception_ptr, ConstPtrT>;
+
+    Base d_data;
+    bool d_isExceptionConsumed = false;
+
+public:
+    OperationResult() = default;
+    OperationResult(const std::exception_ptr& ptr) : d_data(ptr) {}
+    OperationResult(ConstRefType ref) : d_data(&ref) {}
+
+    bool isExceptionConsumed() { return d_isExceptionConsumed; }
+    void consumeException() override { d_isExceptionConsumed = true; }
+
+    bool isException() const override
+    {
+        return holds_alternative<std::exception_ptr>(d_data);
+    }
+
+    const std::exception_ptr& getException() const override
+    {
+        return get<std::exception_ptr>(d_data);
+    }
+
+    ConstRefType getResult() const override
+    {
+        return *get<ConstPtrT>(d_data);
+    }
 };
 
 }
@@ -59,23 +84,17 @@ public:
         static_assert(!std::is_same<FailureDetector, NoFailureDetector>::value,
             "The Task does not have a failure condition.");
 
-        // TODO Task create a Failable from the function.
-        // it means it should get the result of the call (or catch the exception)
-        // and wrap it in a failable.
-        // With the failable it should call the detector to see if it matches a condition.
         using DetectorFailure = typename std::decay_t<FailureDetector>::failure;
         using Result = std::result_of_t<Callable(Args...)>;
         using _Failable = Failable<DetectorFailure, Result>;
 
-        OperationResult<Result> operationResult;
-        auto state = d_failureDetector.preRun();
+        decltype(auto) state{d_failureDetector.preRun()};
 
-        // TODO possibly make here a lambda which is called by the two try brances if needed
-
+        // There is a bit of duplication in the two try branches. Can that be factored out?
         try
         {
             _Failable result{std::forward<Callable>(d_callable)(std::forward<Args>(args)...)};
-            operationResult = result.value();
+            detail::OperationResult<Result> operationResult{result.value()};
             decltype(auto) failure{d_failureDetector.postRun(std::move(state), operationResult)};
             if(holds_failure(failure))
             {
@@ -85,23 +104,23 @@ public:
         }
         catch (...)
         {
-            operationResult = std::current_exception();
-            // TODO how to check if the exception was consumed?
-            // Option: put in OperationResult
+            auto current_exception = std::current_exception();
+            detail::OperationResult<Result> operationResult{current_exception};
             decltype(auto) failure{d_failureDetector.postRun(std::move(state), operationResult)};
-            if(holds_failure(failure))
-            {
-                return _Failable{std::move(failure)};
-            }
             if(not operationResult.isExceptionConsumed())
             {
-                std::rethrow_exception(operationResult.getException());
+                std::rethrow_exception(current_exception);
+            }
+            else if(holds_failure(failure))
+            {
+                return _Failable{std::move(failure)};
             }
             else
             {
                 // The exception was consumed but no failure was reported? Likely a bug.
                 // We have no result and no failure and no exception.
-                throw 1; // TODO proper type
+                throw UnknownTaskResult(
+                    "Task throed exception: no failure was detected but the exception was consumed.");
             }
         }
     }

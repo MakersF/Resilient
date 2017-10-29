@@ -14,7 +14,7 @@ namespace {
 using ResultType = std::string;
 struct FailureMock {};
 
-struct DetectorMock : FailureDetectorTag<FailureMock> // Test with empty and with multiple
+struct Detector : FailureDetectorTag<FailureMock> // TODO Test with empty and with multiple failures
 {
     NoState preRun()
     {
@@ -32,56 +32,101 @@ public:
     ResultType operator()() { return call(); }
 };
 
-struct Task_F : ::testing::Test
+using DetectorMock = testing::StrictMock<Detector>;
+using CallableMock = testing::StrictMock<Callable>;
+using TaskType = Task<CallableMock&, DetectorMock&>;
+
+struct TaskReturnsResult_F : ::testing::Test
 {
-    testing::StrictMock<Callable> d_callable;
-    testing::StrictMock<DetectorMock> d_detector;
+    TaskReturnsResult_F()
+    : d_value("A test")
+    , d_task(d_callable, d_detector)
+    {}
+
+    std::string d_value;
+    CallableMock d_callable;
+    DetectorMock d_detector;
+    TaskType d_task;
+
+    virtual void SetUp() override
+    {
+        EXPECT_CALL(d_callable, call())
+        .WillOnce(testing::Return(d_value));
+    }
+};
+
+struct TaskThrowsException_F : ::testing::Test
+{
+    TaskThrowsException_F()
+    : d_exception("An exception")
+    , d_task(d_callable, d_detector)
+    {}
+
+    std::runtime_error d_exception;
+    CallableMock d_callable;
+    DetectorMock d_detector;
+    TaskType d_task;
+
+    virtual void SetUp() override
+    {
+        EXPECT_CALL(d_callable, call())
+        .WillOnce(testing::Throw(d_exception));
+    }
 };
 
 }
 
-TEST_F(Task_F, TaskReturnsResultWithSuccess)
+TEST_F(TaskReturnsResult_F, When_NoFailureDetected_Then_ValueIsResult)
 {
-    EXPECT_CALL(d_callable, call())
-    .WillOnce(testing::Return("A test"));
-
     EXPECT_CALL(d_detector, postRun(testing::_, testing::_))
     .WillOnce(testing::Return(NoFailure()));
 
-    auto tsk = task(d_callable).failsIf(d_detector);
-    auto result = std::move(tsk)();
+    auto result = std::move(d_task)();
 
     EXPECT_TRUE(result.isValue());
-    EXPECT_EQ(result.value(), "A test");
+    EXPECT_EQ(result.value(), d_value);
 }
 
-TEST_F(Task_F, TaskReturnsFailureIfDetected)
+TEST_F(TaskReturnsResult_F, When_FailureIsDetected_Then_ReturnIsFailure)
 {
-    EXPECT_CALL(d_callable, call())
-    .WillOnce(testing::Return("A test"));
+    EXPECT_CALL(d_detector, postRun(testing::_, testing::_))
+    .WillOnce(testing::Invoke([](NoState, ICallResult<ResultType>& result){
+        return FailureMock();
+    }));
 
+    auto result = std::move(d_task)();
+
+    EXPECT_TRUE(result.isFailure());
+}
+
+TEST_F(TaskThrowsException_F, When_NoFailureDetected_Then_ThrowsSameException)
+{
+    EXPECT_CALL(d_detector, postRun(testing::_, testing::_))
+    .WillOnce(testing::Return(NoFailure()));
+
+    EXPECT_THROW(std::move(d_task)(), decltype(d_exception));
+}
+
+TEST_F(TaskThrowsException_F, When_FailureIsDetectedAndExceptionConsumed_Then_ReturnIsFailure)
+{
     EXPECT_CALL(d_detector, postRun(testing::_, testing::_))
     .WillOnce(testing::Invoke([](NoState, ICallResult<ResultType>& result){
         result.consumeException();
         return FailureMock();
     }));
 
-    auto tsk = task(d_callable).failsIf(d_detector);
-    auto result = std::move(tsk)();
+    auto result = std::move(d_task)();
 
     EXPECT_TRUE(result.isFailure());
 }
 
-TEST_F(Task_F, TaskReturnsFailureIfThrows)
+TEST_F(TaskThrowsException_F, When_NoFailureDetectedAndExceptionConsumed_Then_ThrowUnknownTaskResult)
 {
-    EXPECT_CALL(d_callable, call())
-    .WillOnce(testing::Throw(std::runtime_error("An error")));
-
     EXPECT_CALL(d_detector, postRun(testing::_, testing::_))
-    .WillOnce(testing::Return(NoFailure()));
+    .WillOnce(testing::Invoke([](NoState, ICallResult<ResultType>& result){
+        result.consumeException();
+        return NoFailure();
+    }));
 
-    auto tsk = task(d_callable).failsIf(d_detector);
-    auto result = std::move(tsk)();
-
-    EXPECT_TRUE(result.isFailure());
+    EXPECT_THROW(std::move(d_task)(), UnknownTaskResult);
 }
