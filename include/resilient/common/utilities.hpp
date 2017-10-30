@@ -37,6 +37,9 @@ struct tuple_extend<std::tuple<T...>, std::tuple<Q...>>
 template<typename A, typename B>
 using tuple_extend_t = typename tuple_extend<A, B>::type;
 
+template<typename ...Tuples>
+using tuple_flatten_t = decltype(std::tuple_cat(std::declval<Tuples>()...));
+
 template<typename As, typename T>
 constexpr decltype(auto)
 move_if_rvalue(T&& value)

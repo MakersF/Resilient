@@ -2,6 +2,7 @@
 #include <resilient/detector/returns.hpp>
 #include <resilient/detector/any.hpp>
 #include <resilient/detector/never.hpp>
+#include <resilient/detector/always.hpp>
 #include <resilient/common/failable.hpp>
 
 #include <utility>
@@ -13,87 +14,133 @@ using namespace resilient;
 
 using FailureExample = char;
 
-struct ReturnsFailureSignalMock : IFailureSignal<Returns<int>::failure_types>
+template<typename T>
+struct CallResult: ICallResult<T>
 {
-    MOCK_METHOD1(signalFailure, void(const ErrorReturn&));
-    void signalFailure(ErrorReturn&& er) { signalFailure(er); }
+    MOCK_METHOD0(consumeException, void());
+    MOCK_CONST_METHOD0(isException, bool());
+    MOCK_CONST_METHOD0(getException, const std::exception_ptr&());
+    MOCK_CONST_METHOD0_T(getResult, const T&());
 };
 
-struct NeverFailureSignalMock : IFailureSignal<Never::failure_types>
-{
-    // Derives from an empty interface
-};
+template<typename T>
+using CallResultMock = testing::StrictMock<CallResult<T>>;
 
-struct FailureDetector_F : testing::Test
+struct ReturnsDetector_F : testing::Test
 {
-    FailureDetector_F()
-    : d_resultValue(3)
-    , d_result(d_resultValue)
+    ReturnsDetector_F()
+    : d_value(3)
+    , d_returns(d_value)
     { }
 
-    int d_resultValue;
-    OperationResult<int> d_result;
-    testing::StrictMock<ReturnsFailureSignalMock> d_failureSignal;
+    int d_value;
+    Returns<int&> d_returns;
+    CallResultMock<int> d_callresult;
 };
 
-TEST_F(FailureDetector_F, ReturnMatches)
+TEST_F(ReturnsDetector_F, ReturnMatches)
 {
-    Returns<int> equals(3);
-    EXPECT_CALL(d_failureSignal, signalFailure(testing::_)).Times(1);
+    EXPECT_CALL(d_callresult, isException())
+    .WillOnce(testing::Return(false));
 
-    auto state = equals.preRun();
-    equals.postRun(std::move(state), d_result, d_failureSignal);
+    EXPECT_CALL(d_callresult, getResult())
+    .WillOnce(testing::ReturnRef(d_value));
+
+    auto state = d_returns.preRun();
+    auto detected_failure = d_returns.postRun(std::move(state), d_callresult);
+    EXPECT_TRUE(holds_failure(detected_failure));
 }
 
-TEST_F(FailureDetector_F, ReturnDoesntMatch)
+TEST_F(ReturnsDetector_F, ReturnDoesntMatch)
 {
-    Returns<int> equals(4);
-    EXPECT_CALL(d_failureSignal, signalFailure(testing::_)).Times(0);
+    EXPECT_CALL(d_callresult, isException())
+    .WillOnce(testing::Return(false));
 
-    auto state = equals.preRun();
-    equals.postRun(std::move(state), d_result, d_failureSignal);
+    EXPECT_CALL(d_callresult, getResult())
+    .WillOnce(testing::ReturnRefOfCopy(d_value + 1));
+
+    auto state = d_returns.preRun();
+    auto detected_failure = d_returns.postRun(std::move(state), d_callresult);
+    EXPECT_FALSE(holds_failure(detected_failure));
 }
 
-TEST_F(FailureDetector_F, AnyNoMatches)
+TEST(AnyDetector, When_NoneMatches_Then_NoFailureIsDetected)
 {
+    CallResultMock<int> callresult;
     Returns<int> equal1(4);
     Returns<int> equal2(5);
     auto any = anyOf(equal1, equal2);
-    EXPECT_CALL(d_failureSignal, signalFailure(testing::_)).Times(0);
+
+    EXPECT_CALL(callresult, isException()).WillRepeatedly(testing::Return(false));
+    EXPECT_CALL(callresult, getResult()).WillRepeatedly(testing::ReturnRefOfCopy(3));
 
     auto state = any.preRun();
-    any.postRun(std::move(state), d_result, d_failureSignal);
+    auto detected_failure = any.postRun(std::move(state), callresult);
+    EXPECT_FALSE(holds_failure(detected_failure));
 }
 
-TEST_F(FailureDetector_F, AnyMatchesOne)
+TEST(AnyDetector, When_FirstMatches_Then_SameFailureAsTheFirst)
 {
-    Returns<int> equal1(3);
-    Returns<int> equal2(5);
-    auto any = anyOf(equal1, equal2);
-    EXPECT_CALL(d_failureSignal, signalFailure(testing::_)).Times(1);
+    CallResultMock<int> callresult;
+    Always always;
+    Returns<int> equal(5);
+    auto any = anyOf(always, equal);
+
+    EXPECT_CALL(callresult, isException())
+    .WillRepeatedly(testing::Return(false));
+
+    EXPECT_CALL(callresult, getResult())
+    .WillRepeatedly(testing::ReturnRefOfCopy(3));
 
     auto state = any.preRun();
-    any.postRun(std::move(state), d_result, d_failureSignal);
+    auto detected_failure = any.postRun(std::move(state), callresult);
+    EXPECT_TRUE(holds_alternative<AlwaysError>(detected_failure));
 }
 
-TEST_F(FailureDetector_F, AnyMatchesAll)
+TEST(AnyDetector, When_SecondMatches_Then_SameFailureAsTheSecond)
 {
-    Returns<int> equal1(3);
-    Returns<int> equal2(3);
-    auto any = anyOf(equal1, equal2);
-    EXPECT_CALL(d_failureSignal, signalFailure(testing::_)).Times(2);
+    CallResultMock<int> callresult;
+    Always always;
+    Returns<int> equal(5);
+    auto any = anyOf(equal, always);
+
+    EXPECT_CALL(callresult, isException())
+    .WillRepeatedly(testing::Return(false));
+
+    EXPECT_CALL(callresult, getResult())
+    .WillRepeatedly(testing::ReturnRefOfCopy(3));
 
     auto state = any.preRun();
-    any.postRun(std::move(state), d_result, d_failureSignal);
+    auto detected_failure = any.postRun(std::move(state), callresult);
+    EXPECT_TRUE(holds_alternative<AlwaysError>(detected_failure));
 }
 
-TEST(failures, NeverDoesNotMatch)
+
+TEST(AnyDetector, When_MultipleMatches_Then_SameFailureAsTheFirstMatching)
 {
-    int resultValue = 3;
-    OperationResult<int> result(resultValue);
-    NeverFailureSignalMock failureSignal;
+    CallResultMock<int> callresult;
+    Never never;
+    Always always;
+    Returns<int> equal(3);
+    auto any = anyOf(never, equal, always);
+
+    EXPECT_CALL(callresult, isException())
+    .WillRepeatedly(testing::Return(false));
+
+    EXPECT_CALL(callresult, getResult())
+    .WillRepeatedly(testing::ReturnRefOfCopy(3));
+
+    auto state = any.preRun();
+    auto detected_failure = any.postRun(std::move(state), callresult);
+    EXPECT_TRUE(holds_alternative<ErrorReturn>(detected_failure));
+}
+
+TEST(NeverDetector, DoesNotMatch)
+{
+    CallResultMock<int> callresult;
     Never never;
 
     auto state = never.preRun();
-    never.postRun(state, result, failureSignal);
+    auto detected_failure = never.postRun(std::move(state), callresult);
+    EXPECT_FALSE(holds_failure(detected_failure));
 }

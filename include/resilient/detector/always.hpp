@@ -16,8 +16,12 @@ public:
     }
 
     template<typename T>
-    failure postRun(NoState, const OperationResult<T>&)
+    failure postRun(NoState, ICallResult<T>& result)
     {
+        if(result.isException())
+        {
+            result.consumeException();
+        }
         return AlwaysError();
     }
 };

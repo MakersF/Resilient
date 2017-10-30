@@ -30,7 +30,8 @@ template<typename T>
 class OperationResult : public ICallResult<T>
 {
 private:
-    using ConstRefType = const std::decay_t<T>&;
+    // ConstRefType is a dependent type so it needs to be qualified with typename
+    using typename ICallResult<T>::ConstRefType;
     using ConstPtrT = const std::decay_t<T>*;
     using Base = Variant<std::exception_ptr, ConstPtrT>;
 
@@ -43,7 +44,17 @@ public:
     OperationResult(ConstRefType ref) : d_data(&ref) {}
 
     bool isExceptionConsumed() { return d_isExceptionConsumed; }
-    void consumeException() override { d_isExceptionConsumed = true; }
+    void consumeException() override
+    {
+        if(holds_alternative<std::exception_ptr>(d_data))
+        {
+            d_isExceptionConsumed = true;
+        }
+        else
+        {
+            throw std::runtime_error("Consumed exception while the result is not an exception.");
+        }
+    }
 
     bool isException() const override
     {

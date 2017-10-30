@@ -90,7 +90,7 @@ TEST_F(TaskReturnsResult_F, When_NoFailureDetected_Then_ValueIsResult)
 TEST_F(TaskReturnsResult_F, When_FailureIsDetected_Then_ReturnIsFailure)
 {
     EXPECT_CALL(d_detector, postRun(testing::_, testing::_))
-    .WillOnce(testing::Invoke([](NoState, ICallResult<ResultType>& result){
+    .WillOnce(testing::Invoke([](NoState, ICallResult<ResultType>&){
         return FailureMock();
     }));
 

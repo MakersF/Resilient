@@ -21,11 +21,15 @@ public:
     NoState preRun() { return NoState(); }
 
     template<typename Q>
-    void postRun(NoState, const OperationResult<Q>& result, IFailureSignal<failure_types>& fs)
+    failure postRun(NoState, ICallResult<Q>& result)
     {
         if(not result.isException() and d_failureValue == result.getResult())
         {
-            fs.signalFailure(ErrorReturn());
+            return ErrorReturn();
+        }
+        else
+        {
+            return NoFailure();
         }
     }
 
