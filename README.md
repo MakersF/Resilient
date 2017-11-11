@@ -1,6 +1,6 @@
 # Resilient
 
-Resilient is a library to simplify habdling failures which might happen when performing opertations.
+Resilient is a library to simplify handling failures which might happen when performing operations.
 
 In a world of connected services it's not easy to take into account that this services are not always available.
 
