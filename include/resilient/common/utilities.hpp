@@ -12,7 +12,7 @@ decltype(auto) tuple_append(Tuple&& tuple, T&& item)
                           std::tuple<T>(std::forward<T>(item)));
 }
 
-// Prepend or append a new type to a tuple
+// Prepend or append a new type or a tuple to a tuple
 template<typename A, typename B>
 struct tuple_extend;
 
@@ -56,6 +56,7 @@ move_if_rvalue(T&& value)
                  std::remove_reference_t<T> &&>>(value);
 }
 
+// Get the n-th type from the template argument pack
 template<std::size_t N, typename ...Args>
 using argpack_element_t = std::tuple_element_t<N, std::tuple<Args...>>;
 
@@ -66,6 +67,7 @@ struct same_ref_as<T&, Q> {using type = std::add_lvalue_reference_t<std::remove_
 template<typename T, typename Q>
 struct same_ref_as<T&&, Q> : same_ref_as<T, Q> {};
 
+// Alias for the type T as if it was declared with the same ref-qualifier as Q
 template<typename T, typename Q>
 using same_ref_as_t = typename same_ref_as<T, Q>::type;
 
@@ -74,6 +76,7 @@ struct same_const_as {using type = std::remove_const_t<Q>;};
 template<typename T, typename Q>
 struct same_const_as<const T, Q> {using type = std::add_const_t<Q>;};
 
+// Alias for the type T as if it was declared with the same const-qualifier as Q
 template<typename T, typename Q>
 using same_const_as_t = typename same_const_as<std::remove_reference_t<T>, Q>::type;
 // Need to remove the references because references are never const and probably the user

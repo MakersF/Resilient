@@ -5,6 +5,7 @@
 
 namespace resilient {
 
+// Never detect failure
 class Never : public FailureDetectorTag<>
 {
 public:

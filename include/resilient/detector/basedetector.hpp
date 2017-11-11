@@ -1,12 +1,15 @@
 #pragma once
 
 #include <tuple>
-#include <resilient/common/base_variant.hpp>
+#include <resilient/common/variant.hpp>
 
 namespace resilient {
 
 struct NoFailure {};
 
+// Base struct that the Detectors can derive from.
+// It defines a `failure_types`, a tuple containing the types of failure a detector can return
+// and `failure`, the variant which contains the possible failure value, or NoFailure if no failure is detected.
 template<typename ...FailureTypes>
 struct FailureDetectorTag
 {

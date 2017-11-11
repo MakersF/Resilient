@@ -9,7 +9,6 @@
 
 #include <resilient/common/failable.hpp>
 #include <resilient/common/utilities.hpp>
-#include <resilient/common/foldinvoke.hpp>
 #include <resilient/detector/basedetector.hpp>
 #include <resilient/detector/execution_context.hpp>
 
@@ -72,8 +71,53 @@ public:
     }
 };
 
+template<typename FailureDetector, typename Callable, typename ...Args>
+auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&... args)
+{
+    using DetectorFailure = typename std::decay_t<FailureDetector>::failure;
+    using Result = std::result_of_t<Callable(Args...)>;
+    using _Failable = Failable<DetectorFailure, Result>;
+
+    decltype(auto) state{failureDetector.preRun()};
+
+    // There is a bit of duplication in the two try branches. Can that be factored out?
+    try
+    {
+        _Failable result{std::forward<Callable>(callable)(std::forward<Args>(args)...)};
+        detail::OperationResult<Result> operationResult{get_value(result)};
+        decltype(auto) failure{failureDetector.postRun(std::move(state), operationResult)};
+        if(holds_failure(failure))
+        {
+            result = std::forward<decltype(failure)>(failure);
+        }
+        return std::move(result);
+    }
+    catch (...)
+    {
+        auto current_exception = std::current_exception();
+        detail::OperationResult<Result> operationResult{current_exception};
+        decltype(auto) failure{failureDetector.postRun(std::move(state), operationResult)};
+        if(not operationResult.isExceptionConsumed())
+        {
+            std::rethrow_exception(current_exception);
+        }
+        else if(holds_failure(failure))
+        {
+            return _Failable{std::forward<decltype(failure)>(failure)};
+        }
+        else
+        {
+            // The exception was consumed but no failure was reported? Likely a bug.
+            // We have no result and no failure and no exception.
+            throw UnknownTaskResult(
+                "Task throwed exception: no failure was detected but the exception was consumed.");
+        }
+    }
 }
 
+}
+
+// Wrap a callable and attach a Detector to it, so that when invoked
 template<typename Callable, typename FailureDetector>
 class Task
 {
@@ -90,50 +134,23 @@ public:
     }
 
     template<typename ...Args>
-    auto operator()(Args&&... args) &&
+    auto operator()(Args&&... args) &
     {
-        static_assert(!std::is_same<FailureDetector, NoFailureDetector>::value,
+        static_assert(not std::is_same<FailureDetector, NoFailureDetector>::value,
             "The Task does not have a failure condition.");
 
-        using DetectorFailure = typename std::decay_t<FailureDetector>::failure;
-        using Result = std::result_of_t<Callable(Args...)>;
-        using _Failable = Failable<DetectorFailure, Result>;
+        return detail::runTaskImpl(d_failureDetector, d_callable, std::forward<Args>(args)...);
+    }
 
-        decltype(auto) state{d_failureDetector.preRun()};
+    template<typename ...Args>
+    auto operator()(Args&&... args) &&
+    {
+        static_assert(not std::is_same<FailureDetector, NoFailureDetector>::value,
+            "The Task does not have a failure condition.");
 
-        // There is a bit of duplication in the two try branches. Can that be factored out?
-        try
-        {
-            _Failable result{std::forward<Callable>(d_callable)(std::forward<Args>(args)...)};
-            detail::OperationResult<Result> operationResult{result.value()};
-            decltype(auto) failure{d_failureDetector.postRun(std::move(state), operationResult)};
-            if(holds_failure(failure))
-            {
-                result = std::move(failure);
-            }
-            return std::move(result);
-        }
-        catch (...)
-        {
-            auto current_exception = std::current_exception();
-            detail::OperationResult<Result> operationResult{current_exception};
-            decltype(auto) failure{d_failureDetector.postRun(std::move(state), operationResult)};
-            if(not operationResult.isExceptionConsumed())
-            {
-                std::rethrow_exception(current_exception);
-            }
-            else if(holds_failure(failure))
-            {
-                return _Failable{std::move(failure)};
-            }
-            else
-            {
-                // The exception was consumed but no failure was reported? Likely a bug.
-                // We have no result and no failure and no exception.
-                throw UnknownTaskResult(
-                    "Task throed exception: no failure was detected but the exception was consumed.");
-            }
-        }
+        return detail::runTaskImpl(std::forward<FailureDetector>(d_failureDetector),
+                                   std::forward<Callable>(d_callable),
+                                   std::forward<Args>(args)...);
     }
 
     Task(Callable&& callable, FailureDetector&& condition)

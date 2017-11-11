@@ -13,66 +13,85 @@ using namespace resilient;
 
 namespace {
 
-struct FailureType {};
+struct Failure {};
+struct OtherFailure {};
 
-using FailableType = Failable<FailureType, int>;
+using SingleFailureFailable = Failable<Failure, int>;
+using MultipleFailureFailable = Failable<Variant<Failure, OtherFailure>, int>;
 
+template<typename Failable>
 class Callable
 {
 public:
-    MOCK_METHOD0(call, FailableType());
+    MOCK_METHOD0_T(call, Failable());
 
-    FailableType operator()()
+    Failable operator()()
     {
         return call();
     }
 };
 
 
-class Policies : public testing::Test
+class SinglePolicies : public testing::Test
 {
 protected:
-    testing::StrictMock<Callable> d_callable;
+    testing::StrictMock<Callable<SingleFailureFailable>> d_callable;
+};
+
+class MultiPolicies : public testing::Test
+{
+protected:
+    testing::StrictMock<Callable<MultipleFailureFailable>> d_callable;
 };
 
 }
 
-TEST_F(Policies, Noop)
+TEST_F(SinglePolicies, Noop)
 {
     EXPECT_CALL(d_callable, call())
-    .WillOnce(testing::Return(make_failable<FailureType>(0)));
+    .WillOnce(testing::Return(SingleFailureFailable(0)));
 
     Noop noop;
     auto result = noop(d_callable);
 
-    EXPECT_TRUE(result.isValue());
-    EXPECT_EQ(result.value(), 0);
+    EXPECT_TRUE(holds_value(result));
+    EXPECT_EQ(get_value(result), 0);
 }
 
-TEST_F(Policies, RetryPolicySuccessAfterFewTries)
+TEST_F(SinglePolicies, RetryPolicySuccessAfterFewTries)
 {
     testing::Sequence s;
     EXPECT_CALL(d_callable, call())
-        .WillOnce(testing::Return(failure_for<FailableType>()))
-        .WillOnce(testing::Return(failure_for<FailableType>()))
-        .WillOnce(testing::Return(failure_for<FailableType>()))
-        .WillOnce(testing::Return(make_failable<FailureType>(1)));
+        .WillOnce(testing::Return(SingleFailureFailable{Failure()}))
+        .WillOnce(testing::Return(SingleFailureFailable(1)));
 
-    RetryPolicy retry(5);
+    RetryPolicy retry(1);
 
     auto result = retry(d_callable);
-    EXPECT_TRUE(result.isValue());
-    EXPECT_EQ(result.value(), 1);
+    EXPECT_TRUE(holds_value(result));
+    EXPECT_EQ(get_value(result), 1);
 }
 
-TEST_F(Policies, RetryPolicyNeverSucceeds)
+TEST_F(SinglePolicies, RetryPolicyNeverSucceeds)
 {
     EXPECT_CALL(d_callable, call())
-        .Times(3)
-        .WillRepeatedly(testing::Return(failure_for<FailableType>()));
+        .Times(2)
+        .WillRepeatedly(testing::Return(SingleFailureFailable{Failure()}));
 
-    RetryPolicy retry(3);
+    RetryPolicy retry(1);
 
     auto result = retry(d_callable);
-    EXPECT_TRUE(result.isFailure());
+    EXPECT_TRUE(holds_failure(result));
+    EXPECT_TRUE(holds_alternative<NoMoreRetriesAvailable>(get_failure(result)));
+}
+
+TEST_F(MultiPolicies, CircuitBreakerOpenReturnsError)
+{
+    EXPECT_CALL(d_callable, call()).Times(0);
+
+    CircuitBreaker cb(true);
+
+    auto result = cb(d_callable);
+    EXPECT_TRUE(holds_failure(result));
+    EXPECT_TRUE(holds_alternative<CircuitBreakerIsOpen>(get_failure(result)));
 }

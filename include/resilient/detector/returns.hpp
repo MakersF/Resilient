@@ -10,6 +10,7 @@ namespace resilient {
 
 struct ErrorReturn {};
 
+// Detects error if a function returns a specific value
 template<typename T>
 class Returns : public FailureDetectorTag<ErrorReturn>
 {

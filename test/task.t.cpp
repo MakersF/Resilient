@@ -83,8 +83,8 @@ TEST_F(TaskReturnsResult_F, When_NoFailureDetected_Then_ValueIsResult)
 
     auto result = std::move(d_task)();
 
-    EXPECT_TRUE(result.isValue());
-    EXPECT_EQ(result.value(), d_value);
+    EXPECT_TRUE(holds_value(result));
+    EXPECT_EQ(get_value(result), d_value);
 }
 
 TEST_F(TaskReturnsResult_F, When_FailureIsDetected_Then_ReturnIsFailure)
@@ -96,7 +96,7 @@ TEST_F(TaskReturnsResult_F, When_FailureIsDetected_Then_ReturnIsFailure)
 
     auto result = std::move(d_task)();
 
-    EXPECT_TRUE(result.isFailure());
+    EXPECT_TRUE(holds_failure(result));
 }
 
 TEST_F(TaskThrowsException_F, When_NoFailureDetected_Then_ThrowsSameException)
@@ -117,7 +117,7 @@ TEST_F(TaskThrowsException_F, When_FailureIsDetectedAndExceptionConsumed_Then_Re
 
     auto result = std::move(d_task)();
 
-    EXPECT_TRUE(result.isFailure());
+    EXPECT_TRUE(holds_failure(result));
 }
 
 TEST_F(TaskThrowsException_F, When_NoFailureDetectedAndExceptionConsumed_Then_ThrowUnknownTaskResult)

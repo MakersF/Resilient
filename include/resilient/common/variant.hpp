@@ -11,6 +11,7 @@ namespace resilient {
 
 namespace detail {
 
+// Visitor used to determine if the current type in the variant is T
 template<typename T>
 class IsType
     : public boost::static_visitor<bool>
@@ -55,6 +56,8 @@ using if_is_not_variant = std::enable_if_t<not is_variant<Q>::value, void*>;
 template<typename ...Types>
 class Variant
 {
+// wrap boost variant, providing a more c++17 similar interface.
+// TODO use std::variant if available
 public:
     template<typename U = argpack_element_t<0, Types...>,
              typename = detail::if_is_default_constructible<U>>
@@ -91,6 +94,10 @@ private:
     friend class variant_traits<Variant>;
 };
 
+// Trait used to extract the underlying boost::variant data, so that we can use
+// boost functions on the variant.
+// Whether a fully defined specialization for this trait exists is also used to
+// determine if a type is a variant or not
 template<typename ...Types>
 struct variant_traits<Variant<Types...>>
 {
@@ -102,7 +109,7 @@ struct variant_traits<Variant<Types...>>
 };
 
 template<typename T, typename Variant, if_is_variant<Variant> = nullptr>
-bool holds_alternative(Variant&& variant)
+bool holds_alternative(Variant&& variant) // TODO make it fail to compile if the variant can not hold T
 {
     return boost::apply_visitor(
         detail::IsType<T>(),
@@ -119,83 +126,22 @@ auto get(Variant&& variant) -> same_const_ref_as_t<Variant, T>
                     std::forward<Variant>(variant))));
 }
 
-template<typename Derived, typename ...Failures>
-class BaseVariant
+template<typename Variant>
+struct variant_cat;
+
+template<typename ...Types>
+struct variant_cat<Variant<Types...>>
 {
-private:
-    // if we derive publicly from boost::variant some weird overload resolution failures error come up
-    // when trying to assign to it
-
-    template<typename Class>
-    using is_this_derived_t = std::is_same<std::decay_t<Class>, Derived>;
-
-public:
-    // Constructors
-
-    // We define a template parameter U because if we used Derived
-    // the template would be evaluated at the class instantiaion time,
-    // and we would fail in case the first element is not default constructible
-    template<typename U = argpack_element_t<0, Failures...>,
-             typename = std::enable_if_t<std::is_default_constructible<U>::value>>
-    BaseVariant() : d_data() { }
-
-    template<typename OtherSelf,
-             typename std::enable_if_t<is_this_derived_t<OtherSelf>::value, void*> = nullptr>
-    BaseVariant(OtherSelf&& self)
-    : d_data(move_if_rvalue<OtherSelf>(self.d_data))
-    { }
-
-    template<typename Other,
-             typename std::enable_if_t<!is_this_derived_t<Other>::value, void*> = nullptr>
-    BaseVariant(Other&& value)
-    : d_data(std::forward<Other>(value))
-    { }
-
-    template<typename OtherSelf,
-             typename std::enable_if_t<is_this_derived_t<OtherSelf>::value, void*> = nullptr>
-    Derived& operator=(OtherSelf&& self)
-    {
-        d_data = move_if_rvalue<OtherSelf>(self.d_data);
-        return *static_cast<Derived*>(this);
-    }
-
-    template<typename Other,
-             typename std::enable_if_t<!is_this_derived_t<Other>::value, void*> = nullptr>
-    Derived& operator=(Other&& value)
-    {
-        d_data = std::forward<Other>(value);
-        return *static_cast<Derived*>(this);
-    }
-
-    template<typename T>
-    bool is() const
-    {
-        return boost::apply_visitor(detail::IsType<T>(), this->d_data);
-    }
-
-    template<typename T>
-    const T& get() const
-    {
-        assert(is<T>());
-        return boost::strict_get<T>(this->d_data);
-    }
-
-    template<typename T>
-    T& get()
-    {
-        assert(is<T>());
-        return boost::strict_get<T>(this->d_data);
-    }
-
-    template<typename T>
-    T&& get() &&
-    {
-        assert(is<T>());
-        return std::move(boost::strict_get<T>(this->d_data));
-    }
-
-protected:
-    boost::variant<Failures...> d_data;
+    template<typename ...NewTypes>
+    using type = Variant<Types..., NewTypes...>;
 };
 
+template<typename Variant, typename ...NewTypes>
+using variant_cat_t = typename variant_cat<Variant>::template type<NewTypes...>;
+
+template<typename Variant>
+struct is_any_variant : std::false_type {};
+
+template<typename ...Types>
+struct is_any_variant<Variant<Types...>> : std::true_type {};
 }

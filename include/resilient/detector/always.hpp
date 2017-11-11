@@ -7,6 +7,7 @@ namespace resilient {
 
 struct AlwaysError {};
 
+// Always detect failure
 class Always : public FailureDetectorTag<AlwaysError>
 {
 public:

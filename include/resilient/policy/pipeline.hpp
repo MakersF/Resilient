@@ -9,6 +9,7 @@
 
 namespace resilient {
 
+// Define a sequence of polices, which will be executed in order
 template<typename ...Policies>
 class Pipeline
 {

@@ -5,8 +5,6 @@
 #include <type_traits>
 #include <initializer_list>
 
-
-#include <resilient/common/foldinvoke.hpp>
 #include <resilient/detector/basedetector.hpp>
 
 namespace resilient {
@@ -44,7 +42,7 @@ Failure callPostRun(std::tuple<FailureConditions...>& conditions,
                  std::index_sequence<I...>)
 {
     Failure mainFailure{NoFailure()};
-    // Initializer list of comma expression with the first casted to void to prevent operator comma to be called
+    // Initializer list of comma expression
     (void) std::initializer_list<int>{
         singlePostRun(mainFailure, std::get<I>(conditions), std::move(std::get<I>(state)), result)...
     };
@@ -54,6 +52,7 @@ Failure callPostRun(std::tuple<FailureConditions...>& conditions,
 
 }
 
+// Check a set of detectors for any of them to fail
 template<typename ...FailureConditions>
 // TODO remove duplicates from the list
 class Any : public FailureDetectorByTupleTag<tuple_flatten_t<typename std::decay_t<FailureConditions>::failure_types...>>

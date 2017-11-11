@@ -7,10 +7,10 @@ namespace resilient {
 class Noop
 {
 public:
-    template<typename Job, typename ...Args>
-    decltype(auto) operator()(Job&& job, Args&&... args)
+    template<typename Callable, typename ...Args>
+    decltype(auto) operator()(Callable&& callable, Args&&... args)
     {
-        return std::forward<Job>(job)(std::forward<Args>(args)...);
+        return std::forward<Callable>(callable)(std::forward<Args>(args)...);
     }
 };
 
