@@ -5,8 +5,6 @@
 #include <type_traits>
 #include <exception>
 
-#include <boost/optional.hpp>
-
 #include <resilient/common/failable.hpp>
 #include <resilient/common/utilities.hpp>
 #include <resilient/detector/basedetector.hpp>

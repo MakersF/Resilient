@@ -4,8 +4,6 @@
 #include <utility>
 #include <tuple>
 
-#include <resilient/common/variant.hpp>
-
 namespace resilient {
 
 struct NoState {};

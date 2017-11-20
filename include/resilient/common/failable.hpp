@@ -1,9 +1,6 @@
 #pragma once
 
 #include <utility>
-#include <cassert>
-
-#include <boost/variant.hpp>
 
 #include <resilient/common/utilities.hpp>
 #include <resilient/common/variant.hpp>

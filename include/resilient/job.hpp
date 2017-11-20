@@ -1,8 +1,6 @@
 #pragma once
 
 #include <utility>
-#include <type_traits>
-#include <resilient/policy/noop.hpp>
 
 namespace resilient {
 

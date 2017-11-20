@@ -3,7 +3,6 @@
 #include <utility>
 #include <tuple>
 #include <type_traits>
-#include <resilient/common/failable.hpp>
 #include <resilient/common/utilities.hpp>
 #include <resilient/common/foldinvoke.hpp>
 

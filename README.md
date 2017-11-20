@@ -2,7 +2,7 @@
 
 Resilient is a library to simplify handling failures which might happen when performing operations.
 
-In a world of connected services it's not easy to take into account that this services are not always available.
+In a world of connected services it's not easy to assume that this services are not always available.
 
 Resilient aims to ease the work required to do that.
 
@@ -22,7 +22,7 @@ with(RetryPolicy(5))
 
 # Documentation
 
-More documentation can be found in the commomn, detector, policy and task folders inside the resilient folder.
+More documentation can be found in the common, detector, policy and task folders inside the resilient folder.
 # Requirements
 
 - C++14

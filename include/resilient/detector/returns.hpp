@@ -2,7 +2,6 @@
 
 #include <type_traits>
 
-#include <resilient/common/failable.hpp>
 #include <resilient/detector/basedetector.hpp>
 #include <resilient/detector/execution_context.hpp>
 

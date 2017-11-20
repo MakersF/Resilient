@@ -1,9 +1,7 @@
 #pragma once
 
-#include <type_traits>
 #include <utility>
 
-#include <resilient/common/failable.hpp>
 #include <resilient/policy/policy_utils.hpp>
 
 namespace resilient {
