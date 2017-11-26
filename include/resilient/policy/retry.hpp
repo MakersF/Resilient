@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include <resilient/common/invoke.hpp>
 #include <resilient/policy/policy_utils.hpp>
 
 namespace resilient {
@@ -24,7 +25,7 @@ public:
     {
         for(int i = 0; i <= d_retries; ++i)
         {
-            decltype(auto) result{callable(args...)};
+            decltype(auto) result{detail::invoke(callable, args...)};
             if(holds_value(result))
             {
                 return std::forward<decltype(result)>(result);

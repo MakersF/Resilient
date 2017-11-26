@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <exception>
 
+#include <resilient/common/invoke.hpp>
 #include <resilient/common/failable.hpp>
 #include <resilient/common/utilities.hpp>
 #include <resilient/detector/basedetector.hpp>
@@ -73,7 +74,7 @@ template<typename FailureDetector, typename Callable, typename ...Args>
 auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&... args)
 {
     using DetectorFailure = typename std::decay_t<FailureDetector>::failure;
-    using Result = std::result_of_t<Callable(Args...)>;
+    using Result = detail::invoke_result_t<Callable, Args...>;
     using _Failable = Failable<DetectorFailure, Result>;
 
     decltype(auto) state{failureDetector.preRun()};
@@ -81,7 +82,7 @@ auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&.
     // There is a bit of duplication in the two try branches. Can that be factored out?
     try
     {
-        _Failable result{std::forward<Callable>(callable)(std::forward<Args>(args)...)};
+        _Failable result{detail::invoke(std::forward<Callable>(callable), std::forward<Args>(args)...)};
         detail::OperationResult<Result> operationResult{get_value(result)};
         decltype(auto) failure{failureDetector.postRun(std::move(state), operationResult)};
         if(holds_failure(failure))

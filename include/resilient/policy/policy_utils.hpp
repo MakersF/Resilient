@@ -2,6 +2,8 @@
 
 #include <resilient/common/variant.hpp>
 #include <resilient/common/failable.hpp>
+#include <resilient/common/invoke.hpp>
+
 
 namespace resilient {
 
@@ -34,8 +36,8 @@ template<typename T, typename ...NewFailures>
 using add_failure_to_noref_t = add_failure_to_failable_t<std::remove_reference_t<T>, NewFailures...>;
 
 template<typename F, typename ...Args>
-using noforward_result_of_t = std::result_of_t<F&(Args&...)>;
+using noforward_result_of_t = detail::invoke_result_t<F&, Args&...>;
 
 template<typename F, typename ...Args>
-using forward_result_of_t = std::result_of_t<F&&(Args&&...)>;
+using forward_result_of_t = detail::invoke_result_t<F, Args...>;
 }

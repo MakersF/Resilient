@@ -5,6 +5,7 @@
 #include <type_traits>
 
 #include <resilient/common/utilities.hpp>
+#include <resilient/common/invoke.hpp>
 
 namespace resilient {
 
@@ -38,7 +39,7 @@ struct FoldInvokeImpl<Tuple, length, length>
     template<typename Callable, typename ...Args>
     static decltype(auto) call(Tuple&&, Callable&& callable, Args&&... args)
     {
-        return std::forward<Callable>(callable)(std::forward<Args>(args)...);
+        return detail::invoke(std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 };
 

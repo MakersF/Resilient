@@ -1,6 +1,7 @@
 #pragma once
 
 #include <utility>
+#include <resilient/common/invoke.hpp>
 
 namespace resilient {
 
@@ -11,13 +12,13 @@ public:
     template<typename Callable, typename ...Args>
     decltype(auto) run(Callable&& callable, Args&&... args) &
     {
-        return d_policy(std::forward<Callable>(callable), std::forward<Args>(args)...);
+        return detail::invoke(d_policy, std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
     template<typename Callable, typename ...Args>
     decltype(auto) run(Callable&& callable, Args&&... args) &&
     {
-        return std::forward<Policy>(d_policy)(std::forward<Callable>(callable), std::forward<Args>(args)...);
+        return detail::invoke(std::forward<Policy>(d_policy), std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
     explicit Job(Policy&& policy)

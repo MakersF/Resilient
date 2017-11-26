@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include <resilient/common/invoke.hpp>
 #include <resilient/policy/policy_utils.hpp>
 
 namespace resilient {
@@ -26,7 +27,7 @@ public:
         {
             return CircuitBreakerIsOpen();
         }
-        return std::forward<Callable>(callable)(std::forward<Args>(args)...);
+        return detail::invoke(std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
 private:
