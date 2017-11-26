@@ -12,7 +12,7 @@ decltype(auto) tuple_append(Tuple&& tuple, T&& item)
                           std::tuple<T>(std::forward<T>(item)));
 }
 
-// Prepend or append a new type or a tuple to a tuple
+// Prepend or append a new type or a list of types (packed in a tuple) to a tuple
 template<typename A, typename B>
 struct tuple_extend;
 
@@ -40,6 +40,8 @@ using tuple_extend_t = typename tuple_extend<A, B>::type;
 template<typename ...Tuples>
 using tuple_flatten_t = decltype(std::tuple_cat(std::declval<Tuples>()...));
 
+// Equivalent of forward buw we can use a different type to decide how to forward.
+// This is useful when you want to forward a variable based on the type of a different variable.
 template<typename As, typename T>
 constexpr decltype(auto)
 move_if_rvalue(T&& value)
@@ -97,5 +99,9 @@ struct is_complete_type: std::false_type {};
 
 template<class T>
 struct is_complete_type<detail::first_t<T, sizeof(T)>> : std::true_type {};
+// Use the first_t template to evaluate the sizeof in the context of SFINAE.
+// sizeof does not exist for incomplete types and this will fail in that case.
+// Using first_t (note: it needs to be a typedef, it can't be a dependent type)
+// the compiler is able to resolve the specialization.
 
 }

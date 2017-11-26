@@ -33,6 +33,9 @@ struct FoldInvokeImpl
     }
 };
 
+// This specialization is called when all the functions in the tuple were called.
+// This is the base case of the recursion.
+// If we imagine foldInvoke as a variation of 'accumulate', this would be the starting value.
 template<typename Tuple, std::size_t length>
 struct FoldInvokeImpl<Tuple, length, length>
 {

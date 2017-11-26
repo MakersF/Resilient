@@ -25,6 +25,7 @@ public:
     {
         for(int i = 0; i <= d_retries; ++i)
         {
+            // This can be called several times, so we can't move callable and args... into it.
             decltype(auto) result{detail::invoke(callable, args...)};
             if(holds_value(result))
             {

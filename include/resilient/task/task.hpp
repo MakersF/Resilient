@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <utility>
 #include <tuple>
 #include <type_traits>
@@ -61,11 +62,13 @@ public:
 
     const std::exception_ptr& getException() const override
     {
+        assert(isException());
         return get<std::exception_ptr>(d_data);
     }
 
     ConstRefType getResult() const override
     {
+        assert(not isException());
         return *get<ConstPtrT>(d_data);
     }
 };
@@ -147,6 +150,10 @@ public:
         static_assert(not std::is_same<FailureDetector, NoFailureDetector>::value,
             "The Task does not have a failure condition.");
 
+        // This is invoked when Task is an rvalue.
+        // We can move it's members, but ony if they are not lvalues, as the user might have a reference
+        // to them otherwise.
+        // If they were passed as reference moving them is incorect: that's why we use forward.
         return detail::runTaskImpl(std::forward<FailureDetector>(d_failureDetector),
                                    std::forward<Callable>(d_callable),
                                    std::forward<Args>(args)...);

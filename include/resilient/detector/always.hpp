@@ -21,6 +21,10 @@ public:
     {
         if(result.isException())
         {
+            // The goal of this class is to alwaws return error, independently from what happens.
+            // We need to always consume the exception because if no one consumes it we are going to get
+            // an error.
+            // Since there is no guarantee another detector will consume the exception this needs to do it.
             result.consumeException();
         }
         return AlwaysError();

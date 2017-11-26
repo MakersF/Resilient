@@ -34,6 +34,7 @@ struct variant_traits<Failable<Failure, Value>>
     template<typename T>
     static decltype(auto) get_data(T&& failable)
     {
+        // Since this is a friend to the class we can get the failable as variant and use the trait of Variant
         return variant_traits<typename Failable<Failure, Value>::Base>::get_data(
             move_if_rvalue<T>(failable.asVariant()));
     }
