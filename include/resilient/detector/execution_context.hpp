@@ -3,6 +3,7 @@
 #include <exception>
 #include <utility>
 #include <tuple>
+#include <resilient/common/invoke.hpp>
 
 namespace resilient {
 
@@ -21,5 +22,18 @@ public:
 
     virtual ~ICallResult() {}
 };
+
+template<typename Visitor, typename T>
+constexpr decltype(auto) visit(Visitor&& visitor, ICallResult<T>& callresult)
+{
+    if (callresult.isException())
+    {
+        return detail::invoke(std::forward<Visitor>(visitor), callresult.getException());
+    }
+    else
+    {
+        return detail::invoke(std::forward<Visitor>(visitor), callresult.getResult());
+    }
+}
 
 }
