@@ -35,9 +35,11 @@ using add_failure_to_failable_t = resilient::Failable<
 template<typename T, typename ...NewFailures>
 using add_failure_to_noref_t = add_failure_to_failable_t<std::remove_reference_t<T>, NewFailures...>;
 
+// Determines the type of invoking F with Args if they are both passed as references.
 template<typename F, typename ...Args>
 using noforward_result_of_t = detail::invoke_result_t<F&, Args&...>;
 
+// Determines the type of invoking F with Args if they are both forwarded.
 template<typename F, typename ...Args>
 using forward_result_of_t = detail::invoke_result_t<F, Args...>;
 }

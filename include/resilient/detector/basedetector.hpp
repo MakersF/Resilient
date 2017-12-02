@@ -24,7 +24,7 @@ struct FailureDetectorByTupleTag;
 template<typename ...FailureTypes>
 struct FailureDetectorByTupleTag<std::tuple<FailureTypes...>> : FailureDetectorTag<FailureTypes...> {};
 
-template<typename Failure>
+template<typename Failure, if_is_variant<Failure> = nullptr>
 bool holds_failure(Failure&& failure)
 {
     return not holds_alternative<NoFailure>(failure);

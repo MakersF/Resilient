@@ -7,38 +7,28 @@
 
 namespace resilient {
 
-// Represent the return value of an operation which might fail
-template<typename Failure, typename Value>
-class Failable : private Variant<Failure, Value>
+namespace detail {
+
+template<typename Failable>
+struct as_variant
 {
-private:
-    using Base = Variant<Failure, Value>;
-
-    const Base& asVariant() const { return *this; }
-    Base& asVariant() { return *this; }
-
-    friend class variant_traits<Failable>;
-
-public:
-    using failure_type = Failure;
-    using value_type = Value;
-
-    using Base::Base;
-    using Base::operator=;
+    using type = same_const_ref_as_t<Failable, typename std::decay_t<Failable>::Base>;
 };
 
-// Specialize variant traits so that Failable can be used like a variant
-template<typename Failure, typename Value>
-struct variant_traits<Failable<Failure, Value>>
+template<typename Failable>
+using as_variant_t = typename as_variant<Failable>::type;
+
+// Allow to access the Failable as if it was a varian, so that all the variant functions can be used
+template<typename Failable>
+as_variant_t<Failable> get_variant(Failable&& f)
 {
-    template<typename T>
-    static decltype(auto) get_data(T&& failable)
-    {
-        // Since this is a friend to the class we can get the failable as variant and use the trait of Variant
-        return variant_traits<typename Failable<Failure, Value>::Base>::get_data(
-            move_if_rvalue<T>(failable.asVariant()));
-    }
-};
+    return move_if_rvalue<Failable>(f);
+}
+
+}
+
+template<typename Failure, typename Value>
+class Failable; // Forward declare so that we can define is_failable before the implementation
 
 template<typename T>
 struct is_failable : std::false_type {};
@@ -48,28 +38,75 @@ struct is_failable<Failable<F, V>> : std::true_type {};
 template<typename Q>
 using if_is_failable = std::enable_if_t<is_failable<std::decay_t<Q>>::value, void*>;
 
+template<typename Q>
+using if_is_not_failable = std::enable_if_t<not is_failable<std::decay_t<Q>>::value, void*>;
+
+// Represent the return value of an operation which might fail
+template<typename Failure, typename Value>
+class Failable : private Variant<Failure, Value>
+{
+private:
+    using Base = Variant<Failure, Value>;
+
+    template<typename Failable>
+    friend struct detail::as_variant;
+
+    template<typename Failable_>
+    friend detail::as_variant_t<Failable_> detail::get_variant(Failable_&& f);
+        // Make the get_variant friend so that it knows we derive from Variant
+
+public:
+    using failure_type = Failure;
+    using value_type = Value;
+
+    template<typename Other, if_is_failable<Other> = nullptr>
+    Failable(Other&& other) : Base(detail::get_variant(std::forward<Other>(other)))
+    {}
+
+    template<typename Other, if_is_not_failable<Other> = nullptr>
+    Failable(Other&& other) : Base(std::forward<Other>(other))
+    {}
+
+    template<typename Other, if_is_failable<Other> = nullptr>
+    Failable& operator=(Other&& other)
+    {
+        detail::get_variant(*this) = detail::get_variant(std::forward<Other>(other));
+        return *this;
+    }
+
+    template<typename Other, if_is_not_failable<Other> = nullptr>
+    Failable& operator=(Other&& other)
+    {
+        detail::get_variant(*this) = std::forward<Other>(other);
+        return *this;
+    }
+};
+
 template<typename Failure, typename Value>
 bool holds_failure(const Failable<Failure, Value>& failable)
 {
-    return holds_alternative<Failure>(failable);
+    return holds_alternative<Failure>(detail::get_variant(failable));
 }
 
 template<typename Failure, typename Value>
 bool holds_value(const Failable<Failure, Value>& failable)
 {
-    return holds_alternative<Value>(failable);
+    return holds_alternative<Value>(detail::get_variant(failable));
 }
 
 template<typename Failable, if_is_failable<Failable> = nullptr>
 decltype(auto) get_failure(Failable&& failable)
 {
-    return get<typename std::decay_t<Failable>::failure_type>(std::forward<Failable>(failable));
+    return get<typename std::decay_t<Failable>::failure_type>(
+        detail::get_variant(std::forward<Failable>(failable)));
 }
 
 template<typename Failable, if_is_failable<Failable> = nullptr>
 decltype(auto) get_value(Failable&& failable)
 {
-    return get<typename std::decay_t<Failable>::value_type>(std::forward<Failable>(failable));
+    return get<typename std::decay_t<Failable>::value_type>(
+        detail::get_variant(std::forward<Failable>(failable)));
+}
 }
 
 }
