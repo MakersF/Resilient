@@ -4,6 +4,7 @@
 
 #include <resilient/common/utilities.hpp>
 #include <resilient/common/variant.hpp>
+#include <resilient/common/invoke.hpp>
 
 namespace resilient {
 
@@ -107,6 +108,18 @@ decltype(auto) get_value(Failable&& failable)
     return get<typename std::decay_t<Failable>::value_type>(
         detail::get_variant(std::forward<Failable>(failable)));
 }
+
+template<typename Visitor, typename Failable, if_is_failable<Failable> = nullptr>
+decltype(auto) visit(Visitor&& visitor, Failable&& failable)
+{
+    if(holds_failure(failable))
+    {
+        return detail::invoke(std::forward<Visitor>(visitor), get_failure(std::forward<Failable>(failable)));
+    }
+    else
+    {
+        return detail::invoke(std::forward<Visitor>(visitor), get_value(std::forward<Failable>(failable)));
+    }
 }
 
 }
