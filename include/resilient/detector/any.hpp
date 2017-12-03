@@ -54,15 +54,12 @@ Failure callPostRun(std::tuple<FailureConditions...>& conditions,
 
 // Check a set of detectors for any of them to fail
 template<typename ...FailureConditions>
-// TODO remove duplicates from the list
-class Any : public FailureDetectorByTupleTag<tuple_flatten_t<typename std::decay_t<FailureConditions>::failure_types...>>
+class Any // Do not derive from the BaseDetectorTag as it's easier to define the type directly
 {
-private:
-    // failure is a dependent type, so it needs to be qualified
-    using Base = FailureDetectorByTupleTag<tuple_flatten_t<typename std::decay_t<FailureConditions>::failure_types...>>;
-    using typename Base::failure;
-
 public:
+    // TODO remove duplicates from the list
+    using failure_types = tuple_flatten_t<typename std::decay_t<FailureConditions>::failure_types...>;
+
     template<typename FailureCondition>
     using after_adding_t = Any<FailureConditions..., FailureCondition>;
 
@@ -84,9 +81,9 @@ public:
     }
 
     template<typename ...States, typename T>
-    failure postRun(std::tuple<States...>&& state, ICallResult<T>& result)
+    returned_failure_t<failure_types> postRun(std::tuple<States...>&& state, ICallResult<T>& result)
     {
-        return detail::callPostRun<failure>(d_failureConditions,
+        return detail::callPostRun<returned_failure_t<failure_types>>(d_failureConditions,
                                             std::move(state),
                                             result,
                                             std::make_index_sequence<sizeof...(FailureConditions)>());

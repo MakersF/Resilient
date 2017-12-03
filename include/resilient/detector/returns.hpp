@@ -21,7 +21,7 @@ public:
     NoState preRun() { return NoState(); }
 
     template<typename Q>
-    failure postRun(NoState, ICallResult<Q>& result)
+    returned_failure_t<failure_types> postRun(NoState, ICallResult<Q>& result)
     {
         if(not result.isException() and d_failureValue == result.getResult())
         {

@@ -23,6 +23,12 @@ public:
     using std::runtime_error::runtime_error;
 };
 
+class BadImplementationError : std::runtime_error // Should we use std::terminate instead?
+{
+public:
+    using std::runtime_error::runtime_error;
+};
+
 namespace detail {
 
 template<typename T>
@@ -73,10 +79,87 @@ public:
     }
 };
 
+template<typename T, typename Q>
+using is_decayed_same = std::is_same<std::decay_t<T>, Q>;
+
+template<typename T, typename Q>
+using if_is_decayed_same = std::enable_if_t<is_decayed_same<T, Q>::value, void*>;
+
+template<typename T, typename Q>
+using if_is_not_decayed_same = std::enable_if_t<not is_decayed_same<T, Q>::value, void*>;
+
+// Create a visitor which forwards the call to the visitor it wraps except for a specific type.
+// Usefull when you want to perform operations on a variant while knowing one of the possible types
+// it contains is not the current value.
+template<typename IgnoreType, typename Wrapped>
+struct IgnoreTypeVisitor
+{
+    using result_type = typename std::decay_t<Wrapped>::result_type;
+    Wrapped d_wrapped;
+
+    template<typename T, if_is_decayed_same<T, IgnoreType> = nullptr>
+    result_type operator()(T&&)
+    {
+        throw BadImplementationError("The ignored type should never be contained by the variant");
+    }
+
+    template<typename T, if_is_not_decayed_same<T, IgnoreType> = nullptr>
+    result_type operator()(T&& value)
+    {
+        return detail::invoke(std::forward<Wrapped>(d_wrapped), std::forward<T>(value));
+    }
+};
+
+template<typename IgnoreType, typename Wrapped>
+IgnoreTypeVisitor<IgnoreType, Wrapped> make_ignoretype(Wrapped&& wrapped)
+{
+    return IgnoreTypeVisitor<IgnoreType, Wrapped>{std::forward<Wrapped>(wrapped)};
+}
+
+// Assign the current value of a variant to another variant
+template<typename Destination>
+struct AssignVisitor
+{
+     // this is required because boost (possible implementation of variant) requires it from visitors.
+    using result_type = void;
+    Destination& d_destinationVariant;
+
+    template<typename T>
+    void operator()(T&& value)
+    {
+        d_destinationVariant = std::forward<T>(value);
+    }
+};
+
+// Construct an object with the current value of a variant
+template<typename ConstructedType>
+struct ConstructVisitor
+{
+     // this is required because boost (possible implementation of variant) requires it from visitors.
+    using result_type = ConstructedType;
+
+    template<typename T>
+    ConstructedType operator()(T&& value)
+    {
+        return ConstructedType{std::forward<T>(value)};
+    }
+};
+
+// Define a Variant<Failures...> from a std::tuple<Failures...>
+template<typename ...Failures>
+struct failure_variant_type;
+
+template<typename ...Failures>
+struct failure_variant_type<std::tuple<Failures...>>
+{
+    using type = Variant<Failures...>;
+};
+
 template<typename FailureDetector, typename Callable, typename ...Args>
 auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&... args)
 {
-    using DetectorFailure = typename std::decay_t<FailureDetector>::failure;
+    using DetectorFailureTypes = typename std::decay_t<FailureDetector>::failure_types;
+    using DetectorFailure = typename failure_variant_type<DetectorFailureTypes>::type;
     using Result = detail::invoke_result_t<Callable, Args...>;
     using _Failable = Failable<DetectorFailure, Result>;
 
@@ -87,12 +170,20 @@ auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&.
     {
         _Failable result{detail::invoke(std::forward<Callable>(callable), std::forward<Args>(args)...)};
         detail::OperationResult<Result> operationResult{get_value(result)};
+        // TODO this might throw! Big problem if it does: it's going to be considered as if result threw, and state is moved twice
         decltype(auto) failure{failureDetector.postRun(std::move(state), operationResult)};
         if(holds_failure(failure))
         {
-            result = std::forward<decltype(failure)>(failure);
+            // Move the failure from the failure into the result.
+            // In this process we ignore the NoFailure type as it is not a valid state for the result.
+            visit(detail::make_ignoretype<NoFailure>(detail::AssignVisitor<decltype(result)>{result}),
+                  std::forward<decltype(failure)>(failure));
         }
         return std::move(result);
+    }
+    catch (const BadImplementationError&)
+    {
+        throw; // Reraise
     }
     catch (...)
     {
@@ -105,7 +196,11 @@ auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&.
         }
         else if(holds_failure(failure))
         {
-            return _Failable{std::forward<decltype(failure)>(failure)};
+            // Construct a DetectorFailure from the failure and initialize a _Failable with it.
+            // The constructed DetectorFailure is different from the returned failure because it does not
+            // contain the NoFailure type.
+            return _Failable{visit(detail::make_ignoretype<NoFailure>(detail::ConstructVisitor<DetectorFailure>{}),
+                                   std::forward<decltype(failure)>(failure))};
         }
         else
         {

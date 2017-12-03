@@ -15,7 +15,7 @@ public:
     }
 
     template<typename T>
-    failure postRun(NoState, ICallResult<T>&)
+    returned_failure_t<failure_types> postRun(NoState, ICallResult<T>&)
     {
         return NoFailure();
     }

@@ -21,7 +21,7 @@ struct Detector : FailureDetectorTag<FailureMock> // TODO Test with empty and wi
         return NoState();
     }
 
-    MOCK_METHOD2(postRun, failure(NoState, ICallResult<ResultType>&));
+    MOCK_METHOD2(postRun, returned_failure_t<failure_types>(NoState, ICallResult<ResultType>&));
 };
 
 class Callable

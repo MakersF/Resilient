@@ -14,8 +14,26 @@ template<typename ...FailureTypes>
 struct FailureDetectorTag
 {
     using failure_types = std::tuple<FailureTypes...>;
-    using failure = Variant<NoFailure, FailureTypes...>;
 };
+
+namespace detail {
+
+template<typename ...FailureTypes>
+struct returned_failure
+{
+    using type = Variant<NoFailure, FailureTypes...>;
+};
+
+template<typename ...FailureTypes>
+struct returned_failure<std::tuple<FailureTypes...>>
+{
+    using type = Variant<NoFailure, FailureTypes...>;
+};
+
+}
+template<typename ...FailureTypes>
+using returned_failure_t = typename detail::returned_failure<FailureTypes...>::type;
+
 
 // Define a FailureDetectorTag by taking the failures in a tuple
 template<typename T>
