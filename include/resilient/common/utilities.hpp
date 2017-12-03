@@ -87,21 +87,4 @@ using same_const_as_t = typename same_const_as<std::remove_reference_t<T>, Q>::t
 template<typename T, typename Q>
 using same_const_ref_as_t = same_ref_as_t<T, same_const_as_t<T, Q>>;
 
-namespace detail {
-
-template<class First, std::size_t>
-using first_t = First;
-
-}
-
-template<class T>
-struct is_complete_type: std::false_type {};
-
-template<class T>
-struct is_complete_type<detail::first_t<T, sizeof(T)>> : std::true_type {};
-// Use the first_t template to evaluate the sizeof in the context of SFINAE.
-// sizeof does not exist for incomplete types and this will fail in that case.
-// Using first_t (note: it needs to be a typedef, it can't be a dependent type)
-// the compiler is able to resolve the specialization.
-
 }
