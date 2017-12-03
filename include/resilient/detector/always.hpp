@@ -5,12 +5,26 @@
 
 namespace resilient {
 
+/**
+ * @brief The type returned as failure by the `Always` detector.
+ */
 struct AlwaysError {};
 
-// Always detect failure
+/**
+ * @ingroup Detector
+ * @brief A detector which always detects failure.
+ *
+ */
 class Always : public FailureDetectorTag<AlwaysError>, public StatelessDetector<Always>
 {
 public:
+    /**
+     * @brief Always detect AlwaysError failure and consume possible exceptions.
+     *
+     * @tparam T The type returned by the detected function.
+     * @param result The result of invoking the detected function.
+     * @return The failure detected: AlwaysError.
+     */
     template<typename T>
     returned_failure_t<failure_types> detect(ICallResult<T>& result)
     {

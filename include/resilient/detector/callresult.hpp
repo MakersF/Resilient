@@ -21,6 +21,9 @@ template<typename T>
 class ICallResult
 {
 public:
+    /**
+     * @brief Convenience type alias for a const ref to type T.
+     */
     using ConstRefType = const std::decay_t<T>&;
 
     /**

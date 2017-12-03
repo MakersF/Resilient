@@ -3,5 +3,7 @@
 
 # Build
 build/
-
 vendor/
+doxygen_build/
+
+# Documentation
