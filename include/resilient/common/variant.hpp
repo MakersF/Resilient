@@ -131,6 +131,34 @@ auto get(Variant&& variant) -> same_const_ref_as_t<Variant, T>
                 detail::get_boost_variant(std::forward<Variant>(variant))));
 }
 
+namespace detail {
+
+template<typename Visitor, typename Variant>
+struct VisitorWrapper
+{
+    // TODO implement so that the visitor does not have to define result_type
+    using result_type = typename std::decay_t<Visitor>::result_type;
+
+    Visitor& d_visitor;
+
+    template<typename T>
+    result_type operator()(T& value)
+    {
+        return detail::invoke(std::forward<Visitor>(d_visitor), move_if_rvalue<Variant>(value));
+    }
+};
+
+}
+
+template<typename Visitor, typename Variant, if_is_variant<Variant> = nullptr>
+decltype(auto) visit(Visitor&& visitor, Variant&& variant)
+{
+    detail::VisitorWrapper<Visitor, Variant> wrapper{visitor};
+    return boost::apply_visitor(
+        wrapper,
+        detail::get_boost_variant(variant));
+}
+
 template<typename Variant>
 struct variant_cat;
 
@@ -143,10 +171,4 @@ struct variant_cat<Variant<Types...>>
 
 template<typename Variant, typename ...NewTypes>
 using variant_cat_t = typename variant_cat<Variant>::template type<NewTypes...>;
-
-template<typename Variant>
-struct is_any_variant : std::false_type {};
-
-template<typename ...Types>
-struct is_any_variant<Variant<Types...>> : std::true_type {};
 }
