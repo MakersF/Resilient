@@ -3,7 +3,7 @@
 #include <resilient/detector/any.hpp>
 #include <resilient/detector/never.hpp>
 #include <resilient/detector/always.hpp>
-#include <resilient/common/failable.hpp>
+#include <resilient/failable/failable.hpp>
 
 #include <utility>
 

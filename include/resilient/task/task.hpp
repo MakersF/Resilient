@@ -7,7 +7,7 @@
 #include <exception>
 
 #include <resilient/common/invoke.hpp>
-#include <resilient/common/failable.hpp>
+#include <resilient/failable/failable.hpp>
 #include <resilient/common/utilities.hpp>
 #include <resilient/detector/basedetector.hpp>
 #include <resilient/detector/execution_context.hpp>

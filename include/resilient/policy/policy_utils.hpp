@@ -1,7 +1,7 @@
 #pragma once
 
 #include <resilient/common/variant.hpp>
-#include <resilient/common/failable.hpp>
+#include <resilient/failable/failable.hpp>
 #include <resilient/common/invoke.hpp>
 
 
