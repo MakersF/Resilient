@@ -3,7 +3,7 @@
 #include <type_traits>
 
 #include <resilient/detector/basedetector.hpp>
-#include <resilient/detector/execution_context.hpp>
+#include <resilient/detector/callresult.hpp>
 
 namespace resilient {
 

@@ -1,4 +1,4 @@
-#include <resilient/detector/execution_context.hpp>
+#include <resilient/detector/callresult.hpp>
 #include <resilient/detector/returns.hpp>
 #include <resilient/detector/any.hpp>
 #include <resilient/detector/never.hpp>
