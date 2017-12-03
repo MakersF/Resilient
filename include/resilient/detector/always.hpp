@@ -8,16 +8,11 @@ namespace resilient {
 struct AlwaysError {};
 
 // Always detect failure
-class Always : public FailureDetectorTag<AlwaysError>
+class Always : public FailureDetectorTag<AlwaysError>, public StatelessDetector<Always>
 {
 public:
-    NoState preRun()
-    {
-        return NoState();
-    }
-
     template<typename T>
-    returned_failure_t<failure_types> postRun(NoState, ICallResult<T>& result)
+    returned_failure_t<failure_types> detect(ICallResult<T>& result)
     {
         if(result.isException())
         {

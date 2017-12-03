@@ -6,16 +6,11 @@
 namespace resilient {
 
 // Never detect failure
-class Never : public FailureDetectorTag<>
+class Never : public FailureDetectorTag<>, public StatelessDetector<Never>
 {
 public:
-    NoState preRun()
-    {
-        return NoState();
-    }
-
     template<typename T>
-    returned_failure_t<failure_types> postRun(NoState, ICallResult<T>&)
+    returned_failure_t<failure_types> detect(ICallResult<T>&)
     {
         return NoFailure();
     }

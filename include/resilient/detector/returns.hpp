@@ -11,17 +11,15 @@ struct ErrorReturn {};
 
 // Detects error if a function returns a specific value
 template<typename T>
-class Returns : public FailureDetectorTag<ErrorReturn>
+class Returns : public FailureDetectorTag<ErrorReturn>, public StatelessDetector<Returns<T>>
 {
 public:
-    Returns(T&& faliureValue)
-    : d_failureValue(std::forward<T>(faliureValue))
+    Returns(T&& failureValue)
+    : d_failureValue(std::forward<T>(failureValue))
     { }
 
-    NoState preRun() { return NoState(); }
-
     template<typename Q>
-    returned_failure_t<failure_types> postRun(NoState, ICallResult<Q>& result)
+    returned_failure_t<failure_types> detect(ICallResult<Q>& result)
     {
         if(not result.isException() and d_failureValue == result.getResult())
         {

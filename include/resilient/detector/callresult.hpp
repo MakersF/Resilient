@@ -8,11 +8,6 @@
 namespace resilient {
 
 /**
- * @brief Type representing that the detector does not need any state.
- */
-struct NoState {};
-
-/**
  * @ingroup Detector
  * @brief Interface to represent the result of calling a detected function.
  *
