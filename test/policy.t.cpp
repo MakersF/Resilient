@@ -2,7 +2,7 @@
 #include "resilient/policy/circuitbreaker.hpp"
 #include "resilient/policy/retry.hpp"
 #include "resilient/policy/noop.hpp"
-#include "resilient/failable/failable.hpp"
+#include "resilient/task/failable.hpp"
 
 #include <type_traits>
 

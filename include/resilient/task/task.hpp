@@ -1,5 +1,23 @@
 #pragma once
 
+/**
+ * @defgroup Task
+ *
+ * @brief A task is an operation which may fail.
+ *
+ * # Description
+ *
+ * Operations, especially the ones which have to interact with an external system (a web service, perform IPC, etc...),
+ * might fail.
+ * A `task` acknowledges this and make it explicit in its return type: either a result value or a failure.
+ *
+ * # The Concept
+ *
+ * A `task` is any callable object which returns a `Failable` when invoked.
+ *
+ * Any callable object can be transformed into a `task` by instantiating a `Task` and adding some detectors for the failure conditions.
+ */
+
 #include <cassert>
 #include <utility>
 #include <tuple>
@@ -7,7 +25,7 @@
 #include <exception>
 
 #include <resilient/common/invoke.hpp>
-#include <resilient/failable/failable.hpp>
+#include <resilient/task/failable.hpp>
 #include <resilient/common/utilities.hpp>
 #include <resilient/detector/basedetector.hpp>
 #include <resilient/detector/callresult.hpp>
@@ -205,7 +223,7 @@ auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&.
         else
         {
             // The exception was consumed but no failure was reported? Likely a bug.
-            // We have no result and no failure and no exception.
+            // We have no result, no failure and no exception.
             throw UnknownTaskResult(
                 "Task throwed exception: no failure was detected but the exception was consumed.");
         }
@@ -215,10 +233,43 @@ auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&.
 }
 
 // Wrap a callable and attach a Detector to it, so that when invoked
+/**
+ * @ingroup Task
+ * @brief Create a `task` from a callable, using a `Detector` to detect failures.
+ *
+ * Wrap a callable object, making it return a `Failable` when invoked.
+ *
+ * `Task` uses a detector to detect whether the invocation of the callable failed or not.
+ *
+ * @tparam Callable The callable object which will be used when invoking the task.
+ * @tparam FailureDetector The detector that will be used to detect failures when invoking the callable.
+ */
 template<typename Callable, typename FailureDetector>
 class Task
 {
 public:
+
+    /**
+     * @brief Instantiate a new `Task` with the given callable and failure detector
+     *
+     * @note The preferred way to create a `Task` is to use the `task()` function.
+     *
+     * @param callable The callable to use.
+     * @param detector The detector to use.
+     */
+    Task(Callable&& callable, FailureDetector&& detector)
+    : d_callable(std::forward<Callable>(callable))
+    , d_failureDetector(std::forward<FailureDetector>(detector))
+    { }
+
+    /**
+     * @brief Create a new task using the current callable and a new failure condition
+     *
+     * @pre It only compiles if the current `Task` has no failure condition assigned.
+     *
+     * @param condition The new failure condition.
+     * @return The new `Task`
+     */
     template<typename NewFailureDetector>
     Task<Callable, NewFailureDetector> failsIf(NewFailureDetector&& condition) &&
     {
@@ -230,6 +281,11 @@ public:
             std::forward<NewFailureDetector>(condition));
     }
 
+    /**
+     * @brief Invoke the callable checking for failures.
+     *
+     * @param args The arguments to be used when invoking the callable.
+     */
     template<typename ...Args>
     auto operator()(Args&&... args) &
     {
@@ -239,6 +295,9 @@ public:
         return detail::runTaskImpl(d_failureDetector, d_callable, std::forward<Args>(args)...);
     }
 
+    /**
+     * @brief Same as `operator()&`, but also forwards the callable when invoking it.
+     */
     template<typename ...Args>
     auto operator()(Args&&... args) &&
     {
@@ -254,16 +313,22 @@ public:
                                    std::forward<Args>(args)...);
     }
 
-    Task(Callable&& callable, FailureDetector&& condition)
-    : d_callable(std::forward<Callable>(callable))
-    , d_failureDetector(std::forward<FailureDetector>(condition))
-    { }
-
 private:
     Callable d_callable;
     FailureDetector d_failureDetector;
 };
 
+/**
+ * @ingroup Task
+ * @brief Wrap a callable object in a `Task`.
+ *
+ * @param callable The callable to wrap.
+ * @param detector The detector to use.
+ * @return The `Task` wrapping the callable and using the provided detector.
+ *         If no detector is provided a task with no detector is returned.
+ *         In such a case you need to invoke `failsIf()` on the task to provide a detector,
+ *         otherwise the `Task` will not compile.
+ */
 template<typename Callable, typename FailureDetector = NoFailureDetector>
 Task<Callable, FailureDetector> task(Callable&& callable, FailureDetector&& detector = FailureDetector())
 {
