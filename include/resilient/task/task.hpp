@@ -321,6 +321,7 @@ private:
 /**
  * @ingroup Task
  * @brief Wrap a callable object in a `Task`.
+ * @related Task
  *
  * @param callable The callable to wrap.
  * @param detector The detector to use.

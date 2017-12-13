@@ -123,6 +123,7 @@ public:
 /**
  * @ingroup Task
  * @brief Check whether the `Failable` contains a failure.
+ * @related resilient::Failable
  *
  * @param failable The `Failable` to check.
  * @return true If the `Failable` contains the failure.
@@ -137,6 +138,7 @@ bool holds_failure(const Failable<Failure, Value>& failable)
 /**
  * @ingroup Task
  * @brief Check whether the `Failable` contains a value.
+ * @related resilient::Failable
  *
  * @param failable The `Failable` to check.
  * @return true If the `Failable` contains the value.
@@ -151,6 +153,7 @@ bool holds_value(const Failable<Failure, Value>& failable)
 /**
  * @ingroup Task
  * @brief Get the failure in the `Failable`.
+ * @related resilient::Failable
  *
  * @pre The `Failable` is currently holding a failure.
  *
@@ -168,6 +171,8 @@ decltype(auto) get_failure(Failable&& failable)
  * @ingroup Task
  * @brief Get the value in the `Failable`.
  *
+ * @related resilient::Failable
+ *
  * @pre The `Failable` is currently holding a value.
  *
  * @param failable The `Failable` to get the value from.
@@ -183,6 +188,8 @@ decltype(auto) get_value(Failable&& failable)
 /**
  * @ingroup Task
  * @brief Apply a visitor to the `Failable`.
+ *
+ * @related resilient::Failable
  *
  * Invoke the visitor with either the failure or the value, depending on what
  * the `Failable` is currently holding.

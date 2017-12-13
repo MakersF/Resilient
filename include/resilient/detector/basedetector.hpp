@@ -57,7 +57,6 @@ struct StatelessDetector
      * @brief Detect failures by invoking the `Detector`.
      *
      * @tparam T The type returned by the detected function.
-     * @param NoState No state
      * @param result The result of invoking the detected function.
      * @return The result of invoking `detect()` on the `Detector`
      */

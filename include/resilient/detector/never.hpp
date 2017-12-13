@@ -15,8 +15,6 @@ public:
     /**
      * @brief %Never detect a failure.
      *
-     * @tparam T The type returned by the detected function.
-     * @param ICallResult The result of invoking the detected function.
      * @return Always `NoFailure`.
      */
     template<typename T>

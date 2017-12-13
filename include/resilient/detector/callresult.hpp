@@ -63,8 +63,8 @@ public:
 };
 
 /**
- * @ingroup Detector
  * @brief Visit the `ICallResult<T>` as if it was a variant.
+ * @related resilient::ICallResult
  *
  * @tparam Visitor The type of the object which defines the overloaded `operator()` to be called.
  * @tparam T The type returned by the detected function.
