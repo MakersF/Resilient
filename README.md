@@ -22,7 +22,10 @@ with(RetryPolicy(5))
 
 # Documentation
 
-More documentation can be found in the common, detector, policy and task folders inside the resilient folder.
+Most of the code has documentation in line.
+
+Work is in progress to generated HTML documentation with doxygen.
+
 # Requirements
 
 - C++14
