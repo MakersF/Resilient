@@ -5,16 +5,41 @@
 
 namespace resilient {
 
+/**
+ * @brief Run `task`s with a specific `policy`.
+ *
+ * @tparam Policy The `policy` to use when running the task.
+ */
 template<typename Policy>
 class Job
 {
 public:
+
+    /**
+     * @brief Create an instance of `Job` with the specific policy.
+     *
+     * @param policy The policy to use.
+     */
+    explicit Job(Policy&& policy)
+    : d_policy(std::forward<Policy>(policy))
+    { }
+
+    /**
+     * @brief Execute a `task` with the given `policy`.
+     *
+     * @param callable The `task` to run.
+     * @param args The arguments to pass to the `task`.
+     * @return The value returned by invoking the `policy` with the `task`.
+     */
     template<typename Callable, typename ...Args>
     decltype(auto) run(Callable&& callable, Args&&... args) &
     {
         return detail::invoke(d_policy, std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
+    /**
+     * @brief Like `run() &`, but also moves the policy when invoking it with the task.
+     */
     template<typename Callable, typename ...Args>
     decltype(auto) run(Callable&& callable, Args&&... args) &&
     {
@@ -24,15 +49,18 @@ public:
         return detail::invoke(std::forward<Policy>(d_policy), std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
-    explicit Job(Policy&& policy)
-    : d_policy(std::forward<Policy>(policy))
-    { }
-
 private:
     Policy d_policy;
 };
 
 
+/**
+ * @brief Create a `Job` from a policy to run tasks with.
+ * @related Job
+ *
+ * @param policy The policy to use.
+ * @return The `Job` using the policy.
+ */
 template<typename Policy>
 inline Job<Policy> with(Policy&& policy)
 {
