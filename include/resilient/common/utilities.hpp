@@ -44,7 +44,7 @@ using tuple_flatten_t = decltype(std::tuple_cat(std::declval<Tuples>()...));
 // This is useful when you want to forward a variable based on the type of a different variable.
 template<typename As, typename T>
 constexpr decltype(auto)
-move_if_rvalue(T&& value)
+move_if_not_lvalue(T&& value)
 {
     static_assert(
         not(std::is_rvalue_reference<T>::value and

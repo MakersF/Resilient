@@ -18,7 +18,7 @@ struct FoldInvokeImpl
     static decltype(auto) call(Tuple&& tuple, Callable&& callable, Args&&... args)
     {
         // Invoke the index-th function with a lambda which will all the index+1-th function
-        return move_if_rvalue<Tuple>(std::get<index>(tuple))(
+        return move_if_not_lvalue<Tuple>(std::get<index>(tuple))(
             [tuple = std::forward<Tuple>(tuple), callable = std::forward<Callable>(callable)]
             (auto&&... innerArgs) mutable
             {

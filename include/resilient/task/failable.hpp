@@ -23,7 +23,7 @@ using as_variant_t = typename as_variant<Failable>::type;
 template<typename Failable>
 as_variant_t<Failable> get_variant(Failable&& f)
 {
-    return move_if_rvalue<Failable>(f);
+    return move_if_not_lvalue<Failable>(f);
 }
 
 }
@@ -121,7 +121,6 @@ public:
 };
 
 /**
- * @ingroup Task
  * @brief Check whether the `Failable` contains a failure.
  * @related resilient::Failable
  *
@@ -136,7 +135,6 @@ bool holds_failure(const Failable<Failure, Value>& failable)
 }
 
 /**
- * @ingroup Task
  * @brief Check whether the `Failable` contains a value.
  * @related resilient::Failable
  *
@@ -151,7 +149,6 @@ bool holds_value(const Failable<Failure, Value>& failable)
 }
 
 /**
- * @ingroup Task
  * @brief Get the failure in the `Failable`.
  * @related resilient::Failable
  *
@@ -168,9 +165,7 @@ decltype(auto) get_failure(Failable&& failable)
 }
 
 /**
- * @ingroup Task
  * @brief Get the value in the `Failable`.
- *
  * @related resilient::Failable
  *
  * @pre The `Failable` is currently holding a value.
@@ -186,9 +181,7 @@ decltype(auto) get_value(Failable&& failable)
 }
 
 /**
- * @ingroup Task
  * @brief Apply a visitor to the `Failable`.
- *
  * @related resilient::Failable
  *
  * Invoke the visitor with either the failure or the value, depending on what
