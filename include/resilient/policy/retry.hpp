@@ -29,7 +29,7 @@ public:
             decltype(auto) result{detail::invoke(callable, args...)};
             if(holds_value(result))
             {
-                return std::forward<decltype(result)>(result);
+                return get_value(std::forward<decltype(result)>(result));
             }
         }
         return NoMoreRetriesAvailable();

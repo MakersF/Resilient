@@ -1,10 +1,20 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(resilient CXX)
-add_compile_options(-std=c++14)
+OPTION(CPP17 "Compile with c++17" OFF)
+IF(CPP17)
+    add_compile_options(-std=gnu++1z)
+ELSE()
+    add_compile_options(-std=c++14)
+ENDIF()
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -Wall -Wextra") # TODO remove -O0
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -Wextra -ftemplate-backtrace-limit=0") # TODO remove -O0
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -ftemplate-backtrace-limit=0")
+
+OPTION(FORCE_BOOST "Force boost" OFF)
+IF(FORCE_BOOST)
+    ADD_DEFINITIONS(-DFORCE_BOOST=1)
+ENDIF()
 
 # set(HEADER_FILES "...")
 add_library(resilient INTERFACE)

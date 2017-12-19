@@ -29,5 +29,5 @@ Work is in progress to generated HTML documentation with doxygen.
 # Requirements
 
 - C++14
-- gcc-6 or newer
-- boost
+- gcc-6 or newer (gcc-5 has a bug)
+- boost (not required if using c++17)

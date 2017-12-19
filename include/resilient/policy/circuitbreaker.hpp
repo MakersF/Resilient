@@ -4,6 +4,9 @@
 
 #include <resilient/common/invoke.hpp>
 #include <resilient/policy/policy_utils.hpp>
+#include <resilient/common/variant_utils.hpp>
+#include <resilient/task/failable_utils.hpp>
+#include <resilient/common/utilities.hpp>
 
 namespace resilient {
 
@@ -25,9 +28,10 @@ public:
     {
         if(d_open)
         {
-            return CircuitBreakerIsOpen();
+            return from_failure<return_type_t<Callable, Args...>>(CircuitBreakerIsOpen());
         }
-        return detail::invoke(std::forward<Callable>(callable), std::forward<Args>(args)...);
+
+        return from_narrower_failable<return_type_t<Callable, Args...>>(detail::invoke(std::forward<Callable>(callable), std::forward<Args>(args)...));
     }
 
 private:

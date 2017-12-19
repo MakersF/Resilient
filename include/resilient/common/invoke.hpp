@@ -9,7 +9,9 @@
 namespace resilient {
 namespace detail {
 
-#if __cplusplus >= 201703L
+#define HAS_INVOKE __cplusplus >= 201703L
+
+#if HAS_INVOKE
 
 using std::invoke_result;
 using std::invoke_result_t;

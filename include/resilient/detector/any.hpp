@@ -5,6 +5,9 @@
 #include <type_traits>
 #include <initializer_list>
 
+#include <resilient/common/utilities.hpp>
+#include <resilient/common/unique_types_tuple.hpp>
+#include <resilient/common/variant_utils.hpp>
 #include <resilient/detector/basedetector.hpp>
 
 namespace resilient {
@@ -30,7 +33,7 @@ int singlePostRun(Failure& mainFailure, Detector& condition, State&& state, ICal
     decltype(auto) currentFailure{condition.postRun(std::forward<State>(state), result)};
     if(not holds_failure(mainFailure))
     {
-        mainFailure = std::move(currentFailure);
+        assign_from_variant(mainFailure, std::move(currentFailure));
     }
 
     return 0;
@@ -70,13 +73,14 @@ template<typename ...Detectors>
 class Any // Do not derive from the BaseDetectorTag as it's easier to define the type directly
 {
 public:
-    // TODO remove duplicates from the list
     /**
      * @brief Type required by the Detector concept.
      *
      * The `failure_types` are any of the possible failure types returned by the detectors composing it.
      */
-    using failure_types = tuple_flatten_t<typename std::decay_t<Detectors>::failure_types...>;
+    // Concatenate all the failure from the detectors, removing duplicates.
+    using failure_types = detail::unique_types_tuple_t<
+        tuple_flatten_t<typename std::decay_t<Detectors>::failure_types...>>;
 
     /**
      * @brief Define the type of the Any detector if we added a new detector to the current one.
@@ -150,6 +154,7 @@ private:
 
 /**
  * @brief Create a detector which uses the provided detectors in order to detect failures.
+ * @related resilient::Any
  *
  * @tparam Detectors The types of the detectors to use.
  * @param detectors The detectors to use.
