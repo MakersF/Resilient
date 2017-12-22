@@ -1,7 +1,7 @@
 #pragma once
 
 #include <utility>
-#include <resilient/common/invoke.hpp>
+#include <resilient/detail/invoke.hpp>
 
 namespace resilient {
 

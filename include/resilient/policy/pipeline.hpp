@@ -3,8 +3,8 @@
 #include <utility>
 #include <tuple>
 #include <type_traits>
-#include <resilient/common/utilities.hpp>
-#include <resilient/common/foldinvoke.hpp>
+#include <resilient/detail/utilities.hpp>
+#include <resilient/detail/foldinvoke.hpp>
 
 namespace resilient {
 
@@ -30,13 +30,13 @@ public:
     template<typename Callable, typename ...Args>
     decltype(auto) operator()(Callable&& callable, Args&&... args) &
     {
-        return foldInvoke(d_policies, std::forward<Callable>(callable), std::forward<Args>(args)...);
+        return detail::foldInvoke(d_policies, std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
     template<typename Callable, typename ...Args>
     decltype(auto) operator()(Callable&& callable, Args&&... args) &&
     {
-        return foldInvoke(std::move(d_policies), std::forward<Callable>(callable), std::forward<Args>(args)...);
+        return detail::foldInvoke(std::move(d_policies), std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
     explicit Pipeline(std::tuple<Policies...>&& policies)

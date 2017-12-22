@@ -7,7 +7,6 @@
 namespace resilient {
 namespace detail {
 
-
 template<typename T, typename Q>
 using is_decayed_same = std::is_same<std::decay_t<T>, Q>;
 

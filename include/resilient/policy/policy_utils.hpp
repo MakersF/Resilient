@@ -2,7 +2,7 @@
 
 #include <resilient/common/variant.hpp>
 #include <resilient/task/failable.hpp>
-#include <resilient/common/invoke.hpp>
+#include <resilient/detail/invoke.hpp>
 
 
 namespace resilient {

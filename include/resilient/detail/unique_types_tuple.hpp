@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tuple>
-#include <resilient/common/utilities.hpp>
+#include <resilient/detail/utilities.hpp>
 
 namespace resilient {
 namespace detail {

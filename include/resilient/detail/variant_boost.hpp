@@ -1,12 +1,13 @@
 #pragma once
 
 #include <cassert>
-
 #include <utility>
 #include <tuple>
-#include <resilient/common/utilities.hpp>
+
 #include <boost/variant.hpp>
 #include <boost/version.hpp>
+
+#include <resilient/detail/utilities.hpp>
 
 // Before version 1.65 boost does not support rvalues in strict_get
 #define BOOST_STRICT_GET_NO_RVAL_SUPPORT BOOST_VERSION < 106500

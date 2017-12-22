@@ -24,10 +24,10 @@
 #include <type_traits>
 #include <exception>
 
-#include <resilient/common/invoke.hpp>
+#include <resilient/detail/invoke.hpp>
 #include <resilient/task/failable.hpp>
-#include <resilient/common/utilities.hpp>
-#include <resilient/common/variant_utils.hpp>
+#include <resilient/detail/utilities.hpp>
+#include <resilient/detail/variant_utils.hpp>
 #include <resilient/detector/basedetector.hpp>
 #include <resilient/detector/callresult.hpp>
 

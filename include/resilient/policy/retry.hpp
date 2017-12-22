@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include <resilient/common/invoke.hpp>
+#include <resilient/detail/invoke.hpp>
 #include <resilient/policy/policy_utils.hpp>
 
 namespace resilient {

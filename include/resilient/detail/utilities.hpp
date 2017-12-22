@@ -4,6 +4,7 @@
 #include <tuple>
 
 namespace resilient {
+namespace detail {
 
 template<typename Tuple, typename T>
 decltype(auto) tuple_append(Tuple&& tuple, T&& item)
@@ -87,4 +88,5 @@ using same_const_as_t = typename same_const_as<std::remove_reference_t<T>, Q>::t
 template<typename T, typename Q>
 using same_const_ref_as_t = same_ref_as_t<T, same_const_as_t<T, Q>>;
 
+}
 }

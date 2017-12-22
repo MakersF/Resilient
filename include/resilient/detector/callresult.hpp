@@ -3,7 +3,7 @@
 #include <exception>
 #include <utility>
 #include <tuple>
-#include <resilient/common/invoke.hpp>
+#include <resilient/detail/invoke.hpp>
 
 namespace resilient {
 

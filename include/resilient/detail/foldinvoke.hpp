@@ -4,11 +4,10 @@
 #include <tuple>
 #include <type_traits>
 
-#include <resilient/common/utilities.hpp>
-#include <resilient/common/invoke.hpp>
+#include <resilient/detail/utilities.hpp>
+#include <resilient/detail/invoke.hpp>
 
 namespace resilient {
-
 namespace detail {
 
 template<typename Tuple, std::size_t index, std::size_t length>
@@ -46,7 +45,6 @@ struct FoldInvokeImpl<Tuple, length, length>
     }
 };
 
-} //namespace detail
 
 // Tuple must be a tuple of functions.
 // All the functions must take a function as first argument
@@ -67,4 +65,5 @@ decltype(auto) foldInvoke(Tuple&& tuple, Callable&& callable, Args&&... args)
         std::forward<Args>(args)...);
 };
 
+}
 }

@@ -5,9 +5,9 @@
 #include <type_traits>
 #include <initializer_list>
 
-#include <resilient/common/utilities.hpp>
-#include <resilient/common/unique_types_tuple.hpp>
-#include <resilient/common/variant_utils.hpp>
+#include <resilient/detail/utilities.hpp>
+#include <resilient/detail/unique_types_tuple.hpp>
+#include <resilient/detail/variant_utils.hpp>
 #include <resilient/detector/basedetector.hpp>
 
 namespace resilient {
@@ -80,7 +80,7 @@ public:
      */
     // Concatenate all the failure from the detectors, removing duplicates.
     using failure_types = detail::unique_types_tuple_t<
-        tuple_flatten_t<typename std::decay_t<Detectors>::failure_types...>>;
+        detail::tuple_flatten_t<typename std::decay_t<Detectors>::failure_types...>>;
 
     /**
      * @brief Define the type of the Any detector if we added a new detector to the current one.

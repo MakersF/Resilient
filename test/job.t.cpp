@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "resilient/policy/retry.hpp"
+#include <resilient/policy/retry.hpp>
 #include <resilient/detector/returns.hpp>
 #include <resilient/task/task.hpp>
 #include <iostream>

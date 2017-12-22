@@ -9,11 +9,9 @@ static_assert(false, "Only one of FORCE_STD and FORCE_BOOST can be set.")
 #endif
 
 #if ((HAS_VARIANT || FORCE_STD) && !FORCE_BOOST)
-#pragma message "Using std"
-#include <resilient/common/variant_std.hpp>
+#include <resilient/detail/variant_std.hpp>
 #else
-#pragma message "Using Boost"
-#include <resilient/common/variant_boost.hpp>
+#include <resilient/detail/variant_boost.hpp>
 #endif
 
 namespace resilient {

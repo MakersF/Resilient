@@ -2,9 +2,9 @@
 
 #include <utility>
 
-#include <resilient/common/utilities.hpp>
+#include <resilient/detail/utilities.hpp>
 #include <resilient/common/variant.hpp>
-#include <resilient/common/invoke.hpp>
+#include <resilient/detail/invoke.hpp>
 
 namespace resilient {
 

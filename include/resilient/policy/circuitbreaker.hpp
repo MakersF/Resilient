@@ -2,11 +2,11 @@
 
 #include <utility>
 
-#include <resilient/common/invoke.hpp>
+#include <resilient/detail/invoke.hpp>
 #include <resilient/policy/policy_utils.hpp>
-#include <resilient/common/variant_utils.hpp>
+#include <resilient/detail/variant_utils.hpp>
 #include <resilient/task/failable_utils.hpp>
-#include <resilient/common/utilities.hpp>
+#include <resilient/detail/utilities.hpp>
 
 namespace resilient {
 
