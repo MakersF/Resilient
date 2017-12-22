@@ -74,7 +74,6 @@ template<typename ...Types>
 class Variant
 {
 // wrap boost variant, providing a more c++17 similar interface.
-// TODO use std::variant if available
 public:
     template<typename U = argpack_element_t<0, Types...>,
              typename = if_is_default_constructible<U>>
@@ -118,8 +117,9 @@ private:
 
 };
 
+// Visitor which forwards the value based on the ref-ness of the owning variant
 template<typename Visitor, typename Variant>
-struct VisitorWrapper
+struct RvalueForwardingVisitor
 {
     // TODO implement so that the visitor does not have to define result_type
     using result_type = typename std::decay_t<Visitor>::result_type;
@@ -155,7 +155,7 @@ auto get(Variant&& variant) -> same_const_ref_as_t<Variant, T>
     // Put boost::strict_get in the scope and use the unscoped call so that the overload we defined can be found
     using boost::strict_get;
     using resilient::detail::strict_get;
-    return move_if_not_lvalue<Variant>(strict_get<T>(get_boost_variant(std::forward<Variant>(variant))));
+    return strict_get<T>(get_boost_variant(std::forward<Variant>(variant)));
 }
 
 template<typename Visitor, typename Variant, if_is_variant<Variant> = nullptr>
@@ -163,7 +163,7 @@ decltype(auto) visit(Visitor&& visitor, Variant&& variant)
 {
     // Boost does not support r-value visitors or variants in apply_visitor.
     // We wrap the visitor so that we do the forwarding.
-    VisitorWrapper<Visitor, Variant> wrapper{visitor};
+    RvalueForwardingVisitor<Visitor, Variant> wrapper{visitor};
     return boost::apply_visitor(wrapper, get_boost_variant(variant));
 }
 
