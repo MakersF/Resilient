@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cassert>
-#include <type_traits>
 #include <resilient/common/variant.hpp>
+#include <type_traits>
 
 namespace resilient {
 namespace detail {
@@ -48,7 +48,8 @@ IgnoreTypeVisitor<IgnoreType, Wrapped> make_ignoretype(Wrapped&& wrapped)
 template<typename Destination>
 struct AssignVisitor
 {
-     // this is required because boost (possible implementation of variant) requires it from visitors.
+    // this is required because boost (possible implementation of variant) requires it from
+    // visitors.
     using result_type = void;
     Destination& d_destinationVariant;
 
@@ -69,7 +70,8 @@ void assign_from_variant(Destination& destination, Source&& source)
 template<typename ConstructedType>
 struct ConstructVisitor
 {
-     // this is required because boost (possible implementation of variant) requires it from visitors.
+    // this is required because boost (possible implementation of variant) requires it from
+    // visitors.
     using result_type = ConstructedType;
 
     template<typename T>
@@ -86,11 +88,11 @@ Type construct_from_variant(Source&& source)
 }
 
 template<typename F1, typename F2>
-struct Overloaded : F1, F2
+struct Overloaded
+: F1
+, F2
 {
-    Overloaded(F1&& f1, F2&& f2)
-    : F1(std::forward<F1>(f1)), F2(std::forward<F2>(f2))
-    {}
+    Overloaded(F1&& f1, F2&& f2) : F1(std::forward<F1>(f1)), F2(std::forward<F2>(f2)) {}
 
     using F1::operator();
     using F2::operator();
@@ -104,7 +106,7 @@ struct AddResultTypeAlias : F
 
     AddResultTypeAlias(F&& f) : F(std::forward<F>(f)) {}
 
-    template<typename ...Args>
+    template<typename... Args>
     result_type operator()(Args&&... args)
     {
         return (*static_cast<F*>(this))(std::forward<Args>(args)...);
@@ -118,5 +120,5 @@ AddResultTypeAlias<ResultType, Overloaded<F1, F2>> overload(F1&& f1, F2&& f2)
     return {Overloaded<F1, F2>{std::forward<F1>(f1), std::forward<F2>(f2)}};
 }
 
-}
-}
+} // namespace detail
+} // namespace resilient

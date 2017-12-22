@@ -6,17 +6,22 @@
 namespace resilient {
 namespace detail {
 
-template<typename ...T>
+template<typename... T>
 using Variant = std::variant<T...>;
 
 template<typename T>
-struct is_variant : std::false_type {};
-template<typename ...T>
-struct is_variant<Variant<T...>> : std::true_type {};
+struct is_variant : std::false_type
+{
+};
 
-using std::holds_alternative;
+template<typename... T>
+struct is_variant<Variant<T...>> : std::true_type
+{
+};
+
 using std::get;
+using std::holds_alternative;
 using std::visit;
 
-}
-}
+} // namespace detail
+} // namespace resilient

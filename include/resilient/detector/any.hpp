@@ -1,12 +1,12 @@
 #pragma once
 
-#include <utility>
+#include <initializer_list>
 #include <tuple>
 #include <type_traits>
-#include <initializer_list>
+#include <utility>
 
-#include <resilient/detail/utilities.hpp>
 #include <resilient/detail/unique_types_tuple.hpp>
+#include <resilient/detail/utilities.hpp>
 #include <resilient/detail/variant_utils.hpp>
 #include <resilient/detector/basedetector.hpp>
 
@@ -14,11 +14,12 @@ namespace resilient {
 
 namespace detail {
 
-template<typename Conds, size_t ...I>
+template<typename Conds, size_t... I>
 auto callPreRun(Conds& conditions, std::index_sequence<I...>)
 {
     // Use initializer list to guarantee the order
-    return std::tuple<decltype(std::get<I>(conditions).preRun())...>{std::get<I>(conditions).preRun()...};
+    return std::tuple<decltype(std::get<I>(conditions).preRun())...>{
+        std::get<I>(conditions).preRun()...};
 }
 
 // Call postRun on one of the detectors.
@@ -31,30 +32,28 @@ int singlePostRun(Failure& mainFailure, Detector& condition, State&& state, ICal
     // So, if the Failure is already set we don't set it again otherwise we would override with
     // a later failure.
     decltype(auto) currentFailure{condition.postRun(std::forward<State>(state), result)};
-    if(not holds_failure(mainFailure))
-    {
+    if (not holds_failure(mainFailure)) {
         assign_from_variant(mainFailure, std::move(currentFailure));
     }
 
     return 0;
 }
 
-template<typename Failure, typename ...Detectors, typename ...States, typename T, size_t ...I>
+template<typename Failure, typename... Detectors, typename... States, typename T, size_t... I>
 Failure callPostRun(std::tuple<Detectors...>& conditions,
-                 std::tuple<States...>&& state,
-                 ICallResult<T>& result,
-                 std::index_sequence<I...>)
+                    std::tuple<States...>&& state,
+                    ICallResult<T>& result,
+                    std::index_sequence<I...>)
 {
     Failure mainFailure{NoFailure()};
     // Initializer list of comma expression
-    (void) std::initializer_list<int>{
-        singlePostRun(mainFailure, std::get<I>(conditions), std::move(std::get<I>(state)), result)...
-    };
+    (void) std::initializer_list<int>{singlePostRun(
+        mainFailure, std::get<I>(conditions), std::move(std::get<I>(state)), result)...};
 
     return std::move(mainFailure);
 }
 
-}
+} // namespace detail
 
 // Check a set of detectors for any of them to fail
 /**
@@ -69,14 +68,15 @@ Failure callPostRun(std::tuple<Detectors...>& conditions,
  *
  * @tparam Detectors... The detectors used to check the failure.
  */
-template<typename ...Detectors>
+template<typename... Detectors>
 class Any // Do not derive from the BaseDetectorTag as it's easier to define the type directly
 {
-public:
+    public:
     /**
      * @brief Type required by the Detector concept.
      *
-     * The `failure_types` are any of the possible failure types returned by the detectors composing it.
+     * The `failure_types` are any of the possible failure types returned by the detectors composing
+     * it.
      */
     // Concatenate all the failure from the detectors, removing duplicates.
     using failure_types = detail::unique_types_tuple_t<
@@ -97,27 +97,21 @@ public:
      *
      * @param detectors The detectors to use.
      */
-    explicit Any(std::tuple<Detectors...>&& detectors)
-    : d_detectors(std::move(detectors))
-    { }
+    explicit Any(std::tuple<Detectors...>&& detectors) : d_detectors(std::move(detectors)) {}
 
     /**
-     * @brief Create a new Any detector with an additional detector added after all the currently existing ones.
+     * @brief Create a new Any detector with an additional detector added after all the currently
+     * existing ones.
      *
      * @tparam Detector The type of the new detector to add.
      * @param detector The new detector to add.
      * @return A new instance of Any detector with the added detector.
      */
     template<typename Detector>
-    after_adding_t<Detector>
-    addDetector(Detector&& detector) &&
+    after_adding_t<Detector> addDetector(Detector&& detector) &&
     {
-        return after_adding_t<Detector>(
-            std::tuple_cat(
-                std::move(d_detectors),
-                std::make_tuple(std::forward<Detector>(detector))
-            )
-        );
+        return after_adding_t<Detector>(std::tuple_cat(
+            std::move(d_detectors), std::make_tuple(std::forward<Detector>(detector))));
     }
 
     /**
@@ -137,18 +131,20 @@ public:
      * @tparam T The type returned by the detected function.
      * @param state See `States`.
      * @param result The result of invoking the detected function.
-     * @return The Failure detected by the first detector, or NoFailure if no detectors detect a failure.
+     * @return The Failure detected by the first detector, or NoFailure if no detectors detect a
+     * failure.
      */
-    template<typename ...States, typename T>
+    template<typename... States, typename T>
     returned_failure_t<failure_types> postRun(std::tuple<States...>&& state, ICallResult<T>& result)
     {
-        return detail::callPostRun<returned_failure_t<failure_types>>(d_detectors,
-                                            std::move(state),
-                                            result,
-                                            std::make_index_sequence<sizeof...(Detectors)>());
+        return detail::callPostRun<returned_failure_t<failure_types>>(
+            d_detectors,
+            std::move(state),
+            result,
+            std::make_index_sequence<sizeof...(Detectors)>());
     }
 
-private:
+    private:
     std::tuple<Detectors...> d_detectors;
 };
 
@@ -160,12 +156,10 @@ private:
  * @param detectors The detectors to use.
  * @return A detector which combines the provided detectors.
  */
-template<typename ...Detectors>
+template<typename... Detectors>
 Any<Detectors...> anyOf(Detectors&&... detectors)
 {
-    return Any<Detectors...>(
-        std::tuple<Detectors...>(
-            std::forward<Detectors>(detectors)...));
+    return Any<Detectors...>(std::tuple<Detectors...>(std::forward<Detectors>(detectors)...));
 }
 
-}
+} // namespace resilient

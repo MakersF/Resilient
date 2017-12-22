@@ -9,9 +9,11 @@ namespace resilient {
  * @ingroup Detector
  * @brief A detector which never detects failure.
  */
-class Never : public FailureDetectorTag<>, public StatelessDetector<Never>
+class Never
+: public FailureDetectorTag<>
+, public StatelessDetector<Never>
 {
-public:
+    public:
     /**
      * @brief %Never detect a failure.
      *
@@ -24,4 +26,4 @@ public:
     }
 };
 
-}
+} // namespace resilient

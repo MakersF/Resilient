@@ -1,9 +1,9 @@
 #pragma once
 
 #include <exception>
-#include <utility>
-#include <tuple>
 #include <resilient/detail/invoke.hpp>
+#include <tuple>
+#include <utility>
 
 namespace resilient {
 
@@ -20,7 +20,7 @@ namespace resilient {
 template<typename T>
 class ICallResult
 {
-public:
+    public:
     /**
      * @brief Convenience type alias for a const ref to type T.
      */
@@ -75,8 +75,7 @@ public:
 template<typename Visitor, typename T>
 constexpr decltype(auto) visit(Visitor&& visitor, ICallResult<T>& callresult)
 {
-    if (callresult.isException())
-    {
+    if (callresult.isException()) {
         return detail::invoke(std::forward<Visitor>(visitor), callresult.getException());
     }
     else
@@ -85,4 +84,4 @@ constexpr decltype(auto) visit(Visitor&& visitor, ICallResult<T>& callresult)
     }
 }
 
-}
+} // namespace resilient

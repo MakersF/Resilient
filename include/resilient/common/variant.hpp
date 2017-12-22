@@ -5,7 +5,7 @@
 #define HAS_VARIANT __cplusplus >= 201703L
 
 #if FORCE_STD && FORCE_BOOST
-static_assert(false, "Only one of FORCE_STD and FORCE_BOOST can be set.")
+static_assert(false, "Only one of FORCE_STD and FORCE_BOOST can be set.");
 #endif
 
 #if ((HAS_VARIANT || FORCE_STD) && !FORCE_BOOST)
@@ -26,7 +26,7 @@ namespace resilient {
  *
  * @tparam T... The types of the variant
  */
-template<typename ...T>
+template<typename... T>
 using Variant = detail::Variant<T...>;
 
 /**
@@ -72,5 +72,4 @@ using detail::get;
  * @see http://en.cppreference.com/w/cpp/utility/variant
  */
 using detail::visit;
-
-}
+} // namespace resilient

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <utility>
-#include <tuple>
-#include <type_traits>
-#include <resilient/detail/utilities.hpp>
 #include <resilient/detail/foldinvoke.hpp>
 #include <resilient/detail/invoke.hpp>
+#include <resilient/detail/utilities.hpp>
+#include <tuple>
+#include <type_traits>
+#include <utility>
 
 namespace resilient {
 
@@ -16,7 +16,7 @@ namespace detail {
 template<typename Policy>
 struct PolicyAsCallable
 {
-    template<typename ...Args>
+    template<typename... Args>
     decltype(auto) operator()(Args&&... args)
     {
         return d_policy.execute(std::forward<Args>(args)...);
@@ -31,53 +31,54 @@ PolicyAsCallable<Policy> make_callable(Policy&& policy)
     return PolicyAsCallable<Policy>{std::forward<Policy>(policy)};
 }
 
-}
+} // namespace detail
 
 // Define a sequence of polices, which will be executed in order
-template<typename ...Policies>
+template<typename... Policies>
 class Pipeline
 {
-public:
+    public:
     template<typename Policy>
-    Pipeline<Policies... , Policy> then(Policy&& policy) &
+    Pipeline<Policies..., Policy> then(Policy&& policy) &
     {
-        return Pipeline<Policies... , Policy>(
+        return Pipeline<Policies..., Policy>(
             tuple_append(d_policies, detail::make_callable(std::forward<Policy>(policy))));
     }
 
     template<typename Policy>
-    Pipeline<Policies... , Policy> then(Policy&& policy) &&
+    Pipeline<Policies..., Policy> then(Policy&& policy) &&
     {
-        return Pipeline<Policies... , Policy>(
-            tuple_append(std::move(d_policies), detail::make_callable(std::forward<Policy>(policy))));
+        return Pipeline<Policies..., Policy>(tuple_append(
+            std::move(d_policies), detail::make_callable(std::forward<Policy>(policy))));
     }
 
-    template<typename Callable, typename ...Args>
+    template<typename Callable, typename... Args>
     decltype(auto) execute(Callable&& callable, Args&&... args)
     {
-        return detail::foldInvoke(d_policies, std::forward<Callable>(callable), std::forward<Args>(args)...);
+        return detail::foldInvoke(
+            d_policies, std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
-private:
-
+    private:
     explicit Pipeline(std::tuple<detail::PolicyAsCallable<Policies>...>&& callablePolicies)
     : d_policies(std::move(callablePolicies))
-    { }
+    {
+    }
 
     std::tuple<detail::PolicyAsCallable<Policies>...> d_policies;
 
-    template<typename ...T>
+    template<typename... T>
     friend class Pipeline;
 
-    template<typename ...Policy>
+    template<typename... Policy>
     friend Pipeline<Policy...> pipelineOf(Policy&&... policy);
 };
 
-
-template<typename ...Policy>
+template<typename... Policy>
 Pipeline<Policy...> pipelineOf(Policy&&... policy)
 {
-    return Pipeline<Policy...>(std::make_tuple(detail::make_callable(std::forward<Policy>(policy))...));
+    return Pipeline<Policy...>(
+        std::make_tuple(detail::make_callable(std::forward<Policy>(policy))...));
 }
 
-} // resilient
+} // namespace resilient
