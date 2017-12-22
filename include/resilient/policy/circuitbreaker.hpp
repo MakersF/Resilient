@@ -24,7 +24,7 @@ public:
     CircuitBreaker(bool open = false) : d_open(open) { }
 
     template<typename Callable, typename ...Args>
-    return_type_t<Callable, Args...> operator()(Callable&& callable, Args&&... args)
+    return_type_t<Callable, Args...> execute(Callable&& callable, Args&&... args)
     {
         if(d_open)
         {

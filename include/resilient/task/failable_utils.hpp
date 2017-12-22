@@ -20,8 +20,11 @@ Failable from_failure(Failure&& failure)
 
 /**
  * @brief Construct a `Failable` from another `Failable` with the same `value_type` and a narrower `failure_type`.
+ * @related resilient::Failable
  *
  * A `failure_type` is narrower than another one if the variant which represents it can hold less types than the second one.
+ * For example in `using B = resilient::add_failure_to_failable_t<A, NewFailure>`, `A` has a narrower `failure_type` than `B`
+ * since `A` can not represent the failure `NewFailure`.
  *
  * @tparam Failable The type of the `Failable` to create.
  * @param failable The failable to use when creatint the new `Failable`.

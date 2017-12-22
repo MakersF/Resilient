@@ -7,9 +7,8 @@ In a world of connected services it's not easy to assume that this services are 
 Resilient aims to ease the work required to do that.
 
  ```c++
-with(RetryPolicy(5))
-    .run(task([start = 0] () mutable { std::cout << "Run: " << start << std::endl; return start++; })
-    .failsIf(Any(Returns<int>(0), Returns<int>(1)));
+auto counter = [start = 0] () mutable { std::cout << "Run: " << start << std::endl; return start++; };
+RetryPolicy(5).execute(task(counter).failsIf(Any(Returns<int>(0), Returns<int>(1)));
  ```
 
  Will print

@@ -52,7 +52,7 @@ TEST_F(SinglePolicies, Noop)
     .WillOnce(testing::Return(SingleFailureFailable(0)));
 
     Noop noop;
-    auto result = noop(d_callable);
+    auto result = noop.execute(d_callable);
 
     EXPECT_TRUE(holds_value(result));
     EXPECT_EQ(get_value(result), 0);
@@ -67,7 +67,7 @@ TEST_F(SinglePolicies, RetryPolicySuccessAfterFewTries)
 
     RetryPolicy retry(1);
 
-    auto result = retry(d_callable);
+    auto result = retry.execute(d_callable);
     EXPECT_TRUE(holds_value(result));
     EXPECT_EQ(get_value(result), 1);
 }
@@ -80,7 +80,7 @@ TEST_F(SinglePolicies, RetryPolicyNeverSucceeds)
 
     RetryPolicy retry(1);
 
-    auto result = retry(d_callable);
+    auto result = retry.execute(d_callable);
     EXPECT_TRUE(holds_failure(result));
     EXPECT_TRUE(holds_alternative<NoMoreRetriesAvailable>(get_failure(result)));
 }
@@ -91,7 +91,19 @@ TEST_F(MultiPolicies, CircuitBreakerOpenReturnsError)
 
     CircuitBreaker cb(true);
 
-    auto result = cb(d_callable);
+    auto result = cb.execute(d_callable);
     EXPECT_TRUE(holds_failure(result));
     EXPECT_TRUE(holds_alternative<CircuitBreakerIsOpen>(get_failure(result)));
+}
+
+TEST_F(SinglePolicies, Pipeline)
+{
+    EXPECT_CALL(d_callable, call())
+    .WillOnce(testing::Return(SingleFailureFailable(0)));
+
+    Noop noop;
+    auto result = pipelineOf(noop).execute([callable_p = &d_callable]() { return (*callable_p)();});
+
+    EXPECT_TRUE(holds_value(result));
+    EXPECT_EQ(get_value(result), 0);
 }

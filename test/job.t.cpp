@@ -1,5 +1,3 @@
-#include <resilient/job.hpp>
-
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -12,8 +10,8 @@ using namespace resilient;
 
 TEST(aaa, aaa)
 {
-    with(RetryPolicy(5))
-        .run(
+    RetryPolicy(5)
+        .execute(
             task([start = 0] () mutable { std::cout << "Run" << std::endl; return start++; })
                 .failsIf(Returns<int>(0)));
 }

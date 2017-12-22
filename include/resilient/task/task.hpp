@@ -15,7 +15,7 @@
  *
  * A `task` is any callable object which returns a `Failable` when invoked.
  *
- * Any callable object can be transformed into a `task` by instantiating a `Task` and adding some detectors for the failure conditions.
+ * Any callable object can be transformed into a `task` by instantiating a `resilient::Task` and adding some detectors for the failure conditions.
  */
 
 #include <cassert>
@@ -254,7 +254,6 @@ private:
 };
 
 /**
- * @ingroup Task
  * @brief Wrap a callable object in a `Task`.
  * @related Task
  *

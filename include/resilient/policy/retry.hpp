@@ -21,7 +21,7 @@ public:
     RetryPolicy(int numRetries) : d_retries(numRetries) { }
 
     template<typename Callable, typename ...Args>
-    return_type_t<Callable, Args...> operator()(Callable&& callable, Args&&... args)
+    return_type_t<Callable, Args...> execute(Callable&& callable, Args&&... args)
     {
         for(int i = 0; i <= d_retries; ++i)
         {

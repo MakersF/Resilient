@@ -9,7 +9,7 @@ class Noop
 {
 public:
     template<typename Callable, typename ...Args>
-    decltype(auto) operator()(Callable&& callable, Args&&... args)
+    decltype(auto) execute(Callable&& callable, Args&&... args)
     {
         return detail::invoke(std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
