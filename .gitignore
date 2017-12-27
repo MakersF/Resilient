@@ -4,6 +4,6 @@
 # Build
 build/
 vendor/
-doxygen_build/
+doc/**/build
 
 # Documentation
