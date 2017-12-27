@@ -30,7 +30,7 @@ class Returns
 : public FailureDetectorTag<ErrorReturn>
 , public StatelessDetector<Returns<T>>
 {
-    public:
+public:
     /**
      * @brief Construct an instance of Returns.
      *
@@ -58,7 +58,7 @@ class Returns
         }
     }
 
-    private:
+private:
     T d_failureValue;
 };
 

@@ -14,12 +14,12 @@ struct NoMoreRetriesAvailable
 class RetryPolicy
 {
     // TODO implement properly
-    private:
+private:
     template<typename Callable, typename... Args>
     using return_type_t =
         add_failure_to_noref_t<noforward_result_of_t<Callable, Args...>, NoMoreRetriesAvailable>;
 
-    public:
+public:
     RetryPolicy(int numRetries) : d_retries(numRetries) {}
 
     template<typename Callable, typename... Args>
@@ -35,7 +35,7 @@ class RetryPolicy
         return NoMoreRetriesAvailable();
     }
 
-    private:
+private:
     int d_retries;
 };
 

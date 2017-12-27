@@ -60,7 +60,7 @@ using if_is_not_failable = std::enable_if_t<not is_failable<std::decay_t<Q>>::va
 template<typename Failure, typename Value>
 class Failable : private Variant<Failure, Value>
 {
-    private:
+private:
     using Base = Variant<Failure, Value>;
 
     template<typename Failable>
@@ -70,7 +70,7 @@ class Failable : private Variant<Failure, Value>
     friend detail::as_variant_t<Failable_> detail::get_variant(Failable_&& f);
     // Make the get_variant friend so that it knows we derive from Variant
 
-    public:
+public:
     /**
      * @brief Alias for the type of the failure.
      */

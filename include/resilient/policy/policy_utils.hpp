@@ -47,7 +47,6 @@ using add_failure_to_failable_t =
     resilient::Failable<add_failure_type_t<typename Failable::failure_type, NewFailures...>,
                         typename Failable::value_type>;
 
-
 /**
  * @brief Like `add_failure_to_failable_t`, but remove reference from the `Failable`.
  */

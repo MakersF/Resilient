@@ -7,7 +7,7 @@ namespace resilient {
 
 class Noop
 {
-    public:
+public:
     template<typename Callable, typename... Args>
     decltype(auto) execute(Callable&& callable, Args&&... args)
     {

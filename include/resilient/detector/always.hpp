@@ -21,7 +21,7 @@ class Always
 : public FailureDetectorTag<AlwaysError>
 , public StatelessDetector<Always>
 {
-    public:
+public:
     /**
      * @brief Always detect AlwaysError failure and consume possible exceptions.
      *

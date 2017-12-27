@@ -40,13 +40,13 @@ struct NoFailureDetector : FailureDetectorTag<>
 
 class UnknownTaskResult : std::runtime_error
 {
-    public:
+public:
     using std::runtime_error::runtime_error;
 };
 
 class BadImplementationError : std::runtime_error // Should we use std::terminate instead?
 {
-    public:
+public:
     using std::runtime_error::runtime_error;
 };
 
@@ -55,7 +55,7 @@ namespace detail {
 template<typename T>
 class OperationResult : public ICallResult<T>
 {
-    private:
+private:
     // ConstRefType is a dependent type so it needs to be qualified with typename
     using typename ICallResult<T>::ConstRefType;
     using ConstPtrT = const std::decay_t<T>*;
@@ -64,7 +64,7 @@ class OperationResult : public ICallResult<T>
     Base d_data;
     bool d_isExceptionConsumed = false;
 
-    public:
+public:
     OperationResult() = default;
     OperationResult(const std::exception_ptr& ptr) : d_data(ptr) {}
     OperationResult(ConstRefType ref) : d_data(&ref) {}
@@ -184,7 +184,7 @@ auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&.
 template<typename Callable, typename FailureDetector>
 class Task
 {
-    public:
+public:
     /**
      * @brief Instantiate a new `Task` with the given callable and failure detector
      *
@@ -249,7 +249,7 @@ class Task
                                    std::forward<Args>(args)...);
     }
 
-    private:
+private:
     Callable d_callable;
     FailureDetector d_failureDetector;
 };

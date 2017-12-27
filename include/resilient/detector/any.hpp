@@ -71,7 +71,7 @@ Failure callPostRun(std::tuple<Detectors...>& conditions,
 template<typename... Detectors>
 class Any // Do not derive from the BaseDetectorTag as it's easier to define the type directly
 {
-    public:
+public:
     /**
      * @brief Type required by the Detector concept.
      *
@@ -144,7 +144,7 @@ class Any // Do not derive from the BaseDetectorTag as it's easier to define the
             std::make_index_sequence<sizeof...(Detectors)>());
     }
 
-    private:
+private:
     std::tuple<Detectors...> d_detectors;
 };
 

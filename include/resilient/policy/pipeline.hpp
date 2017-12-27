@@ -37,7 +37,7 @@ PolicyAsCallable<Policy> make_callable(Policy&& policy)
 template<typename... Policies>
 class Pipeline
 {
-    public:
+public:
     template<typename Policy>
     Pipeline<Policies..., Policy> then(Policy&& policy) &
     {
@@ -59,7 +59,7 @@ class Pipeline
             d_policies, std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
-    private:
+private:
     explicit Pipeline(std::tuple<detail::PolicyAsCallable<Policies>...>&& callablePolicies)
     : d_policies(std::move(callablePolicies))
     {

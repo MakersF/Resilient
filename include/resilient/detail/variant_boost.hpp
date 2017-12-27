@@ -20,7 +20,7 @@ namespace detail {
 template<typename T>
 class IsType : public boost::static_visitor<bool>
 {
-    public:
+public:
     bool operator()(const T&) const { return true; }
 
     template<typename Other>
@@ -71,12 +71,12 @@ template<typename... Types>
 class Variant
 {
     // wrap boost variant, providing a more c++17 similar interface.
-    public:
+public:
+    // Use a template parameter U so that the evaluation is postponed until instantiation
     template<typename U = argpack_element_t<0, Types...>, typename = if_is_default_constructible<U>>
     Variant()
     {
-    } // Use a template parameter U so that the evaluation is postponed
-      // until instantiation
+    }
 
     template<typename Other, if_is_variant<Other> = nullptr>
     Variant(Other&& other) : d_data(move_if_not_lvalue<Other>(other.d_data))
@@ -102,7 +102,7 @@ class Variant
         return *this;
     }
 
-    private:
+private:
     using ImplVariant = boost::variant<Types...>;
     ImplVariant d_data;
 

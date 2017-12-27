@@ -20,7 +20,7 @@ namespace resilient {
 template<typename T>
 class ICallResult
 {
-    public:
+public:
     /**
      * @brief Convenience type alias for a const ref to type T.
      */

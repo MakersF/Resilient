@@ -13,7 +13,7 @@ class Never
 : public FailureDetectorTag<>
 , public StatelessDetector<Never>
 {
-    public:
+public:
     /**
      * @brief %Never detect a failure.
      *
