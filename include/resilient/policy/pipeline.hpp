@@ -33,11 +33,27 @@ PolicyAsCallable<Policy> make_callable(Policy&& policy)
 
 } // namespace detail
 
-// Define a sequence of polices, which will be executed in order
+/**
+ * @ingroup Policy
+ * @brief Define a sequence of polices, which will be executed in order
+ *
+ * A pipeline of polices runs the task recursively inside a policy.
+ * For example, given a pipeline of a `RetryPolicy` and a `RateLimiter`, when the pipeline is
+ * executed the `RetryPolicy` is going to retry execution of the `RateLimiter` with the provided `Task`.
+ *
+ *
+ * @tparam Policies... The types of the policies
+ */
 template<typename... Policies>
 class Pipeline
 {
 public:
+    /**
+     * @brief Create a new Pipeline with a new policy.
+     *
+     * @param policy The policy to add.
+     * @return The new Pipeline.
+     */
     template<typename Policy>
     Pipeline<Policies..., Policy> then(Policy&& policy) &
     {
@@ -45,6 +61,9 @@ public:
             tuple_append(d_policies, detail::make_callable(std::forward<Policy>(policy))));
     }
 
+    /**
+     * @see `Pipeline::then`
+     */
     template<typename Policy>
     Pipeline<Policies..., Policy> then(Policy&& policy) &&
     {
@@ -52,6 +71,11 @@ public:
             std::move(d_policies), detail::make_callable(std::forward<Policy>(policy))));
     }
 
+    /**
+     * @brief Execute the `Task` with the arguments.
+     *
+     * @return The result of executing the task on all the policies
+     */
     template<typename Callable, typename... Args>
     decltype(auto) execute(Callable&& callable, Args&&... args)
     {
@@ -74,11 +98,18 @@ private:
     friend Pipeline<Policy...> pipelineOf(Policy&&... policy);
 };
 
-template<typename... Policy>
-Pipeline<Policy...> pipelineOf(Policy&&... policy)
+/**
+ * @brief Create a pipeline of policies.
+ * @related resilient::Pipeline
+ *
+ * @param policies... The policies to use in creating the pipeline.
+ * @return The pipeline.
+ */
+template<typename... Policies>
+Pipeline<Policies...> pipelineOf(Policies&&... policies)
 {
-    return Pipeline<Policy...>(
-        std::make_tuple(detail::make_callable(std::forward<Policy>(policy))...));
+    return Pipeline<Policies...>(
+        std::make_tuple(detail::make_callable(std::forward<Policies>(policies))...));
 }
 
 } // namespace resilient

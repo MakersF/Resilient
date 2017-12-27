@@ -5,6 +5,10 @@
 
 namespace resilient {
 
+/**
+ * @ingroup Policy
+ * @brief A Policy which simply invokes the task.
+ */
 class Noop
 {
 public:
