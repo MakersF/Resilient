@@ -21,9 +21,7 @@ RetryPolicy(5).execute(task(counter).failsIf(Any(Returns<int>(0), Returns<int>(1
 
 # Documentation
 
-Most of the code has documentation in line.
-
-Work is in progress to generated HTML documentation with doxygen.
+Find the [API documentation at ReadTheDocs](http://resilient.readthedocs.io/en/latest/).
 
 # Requirements
 
