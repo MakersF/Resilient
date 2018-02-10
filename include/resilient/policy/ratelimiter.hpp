@@ -14,10 +14,26 @@ namespace resilient {
 class IRateLimiterStrategy
 {
 public:
+    using permit_ptr = void*;
+
     /**
-     * @brief Acquire a single permit to execute a request. This call may block.
+     * @brief Acquire a single permit to execute a request.
+     *
+     * `acquire()` is called before invoking the function to wait for a permit.
+     * This call may block.
+     *
+     * @returns A pointer to any object. The pointer is only used to call `release()`.
      */
-    virtual void acquire() = 0;
+    virtual permit_ptr acquire() = 0;
+
+    /**
+     * @brief Release a permit that was previously acquired.
+     *
+     * `release()` is called after the invoked function returned.
+     *
+     * @param permit_ptr The permit returned by `acquire()`.
+     */
+    virtual void release(permit_ptr) = 0;
     virtual ~IRateLimiterStrategy() {}
 };
 
@@ -31,6 +47,21 @@ public:
  */
 class Ratelimiter
 {
+private:
+    // RAII scope guard to acquire and release tokens.
+    struct AcquireReleaseGuard
+    {
+        AcquireReleaseGuard(IRateLimiterStrategy& strategy)
+        : d_rateLimiterStrategy(strategy), d_permit_ptr(d_rateLimiterStrategy.acquire())
+        {
+        }
+
+        ~AcquireReleaseGuard() { d_rateLimiterStrategy.release(d_permit_ptr); }
+
+        IRateLimiterStrategy& d_rateLimiterStrategy;
+        IRateLimiterStrategy::permit_ptr d_permit_ptr;
+    };
+
 public:
     /**
      * @brief Construct a `Ratelimiter` with the provided strategy.
@@ -49,8 +80,8 @@ public:
     template<typename Callable, typename... Args>
     decltype(auto) execute(Callable&& callable, Args&&... args)
     {
-        d_strategy->acquire();
-        return detail::invoke(std::forward<Callable>(callable), std::forward<Args>(args)...));
+        AcquireReleaseGuard guard(*d_strategy);
+        return detail::invoke(std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
 private:
