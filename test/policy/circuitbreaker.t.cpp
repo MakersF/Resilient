@@ -11,7 +11,7 @@ namespace {
 
 struct CircuiBreakerStrategyMock : ICircuitBreakerStrategy
 {
-    MOCK_METHOD0(isOpen, bool());
+    MOCK_METHOD0(allowCall, bool());
     MOCK_METHOD0(registerFailure, void());
     MOCK_METHOD0(registerSuccess, void());
 };
@@ -24,7 +24,7 @@ TEST_F(MultiPolicies, CircuitBreakerOpenReturnsError)
         new testing::StrictMock<CircuiBreakerStrategyMock>()};
 
     EXPECT_CALL(d_callable, call()).Times(0);
-    EXPECT_CALL(*strategy, isOpen()).WillOnce(testing::Return(true));
+    EXPECT_CALL(*strategy, allowCall()).WillOnce(testing::Return(false));
 
     CircuitBreaker cb(std::move(strategy));
     auto result = cb.execute(d_callable);

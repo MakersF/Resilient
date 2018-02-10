@@ -27,12 +27,12 @@ class ICircuitBreakerStrategy
 {
 public:
     /**
-     * @brief Check whether the `CircuitBreaker` tripped and it should stop executing tasks.
+     * @brief Check whether the next call should be execute or should short circuit to failure.
      *
-     * @return true Do not execute the task.
-     * @return false Execute the task.
+     * @return true Execute the task.
+     * @return false Return failure instead of executing the task.
      */
-    virtual bool isOpen() = 0;
+    virtual bool allowCall() = 0;
 
     /**
      * @brief Notify the algorithm that an execution resulted in failure.
@@ -86,7 +86,7 @@ public:
     template<typename Callable, typename... Args>
     return_type_t<Callable, Args...> execute(Callable&& callable, Args&&... args)
     {
-        if (d_strategy->isOpen()) {
+        if (not d_strategy->allowCall()) {
             return from_failure<return_type_t<Callable, Args...>>(CircuitBreakerIsOpen());
         }
 
