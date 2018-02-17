@@ -29,7 +29,7 @@ public:
     /**
      * @brief Release a permit that was previously acquired.
      *
-     * `release()` is called after the invoked function returned.
+     * `release()` is called after the invoked function returned or throwed.
      *
      * @param permit_ptr The permit returned by `acquire()`.
      */
