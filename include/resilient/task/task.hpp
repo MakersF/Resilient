@@ -109,7 +109,7 @@ struct failure_variant_type<std::tuple<Failures...>>
 template<typename FailureDetector, typename Callable, typename... Args>
 auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&... args)
 {
-    using DetectorFailureTypes = typename std::decay_t<FailureDetector>::failure_types;
+    using DetectorFailureTypes = typename std::remove_reference_t<FailureDetector>::failure_types;
     using DetectorFailure = typename failure_variant_type<DetectorFailureTypes>::type;
     using Result = detail::invoke_result_t<Callable, Args...>;
     using _Failable = Failable<DetectorFailure, Result>;

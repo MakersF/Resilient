@@ -22,7 +22,7 @@ using if_is_not_decayed_same = std::enable_if_t<not is_decayed_same<T, Q>::value
 template<typename IgnoreType, typename Wrapped>
 struct IgnoreTypeVisitor
 {
-    using result_type = typename std::decay_t<Wrapped>::result_type;
+    using result_type = typename std::remove_reference_t<Wrapped>::result_type;
     Wrapped d_wrapped;
 
     template<typename T, if_is_decayed_same<T, IgnoreType> = nullptr>

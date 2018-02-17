@@ -80,7 +80,7 @@ public:
      */
     // Concatenate all the failure from the detectors, removing duplicates.
     using failure_types = detail::unique_types_tuple_t<
-        detail::tuple_flatten_t<typename std::decay_t<Detectors>::failure_types...>>;
+        detail::tuple_flatten_t<typename std::remove_reference_t<Detectors>::failure_types...>>;
 
     /**
      * @brief Define the type of the Any detector if we added a new detector to the current one.

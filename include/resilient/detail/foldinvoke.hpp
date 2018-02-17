@@ -55,8 +55,11 @@ struct FoldInvokeImpl<Tuple, length, length>
 template<typename Tuple, typename Callable, typename... Args>
 decltype(auto) foldInvoke(Tuple&& tuple, Callable&& callable, Args&&... args)
 {
-    return detail::FoldInvokeImpl<Tuple, 0, std::tuple_size<std::decay_t<Tuple>>::value>::call(
-        std::forward<Tuple>(tuple), std::forward<Callable>(callable), std::forward<Args>(args)...);
+    return detail::
+        FoldInvokeImpl<Tuple, 0, std::tuple_size<std::remove_reference_t<Tuple>>::value>::call(
+            std::forward<Tuple>(tuple),
+            std::forward<Callable>(callable),
+            std::forward<Args>(args)...);
 };
 
 } // namespace detail

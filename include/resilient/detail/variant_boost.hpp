@@ -34,7 +34,8 @@ public:
 template<typename Variant>
 struct as_boost_variant
 {
-    using type = same_const_ref_as_t<Variant, typename std::decay_t<Variant>::ImplVariant>;
+    using type =
+        same_const_ref_as_t<Variant, typename std::remove_reference_t<Variant>::ImplVariant>;
 };
 
 template<typename Variant>
@@ -122,7 +123,7 @@ template<typename Visitor, typename Variant>
 struct RvalueForwardingVisitor
 {
     // TODO implement so that the visitor does not have to define result_type
-    using result_type = typename std::decay_t<Visitor>::result_type;
+    using result_type = typename std::remove_reference_t<Visitor>::result_type;
 
     Visitor& d_visitor;
 

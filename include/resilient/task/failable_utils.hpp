@@ -35,7 +35,7 @@ Failable from_failure(Failure&& failure)
 template<typename Failable, typename OtherFailable>
 Failable from_narrower_failable(OtherFailable&& failable)
 {
-    using FailureType = typename std::decay_t<Failable>::failure_type;
+    using FailureType = typename std::remove_reference_t<Failable>::failure_type;
     if (holds_value(failable)) {
         return Failable{get_value(std::forward<OtherFailable>(failable))};
     }
