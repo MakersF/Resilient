@@ -13,7 +13,7 @@ namespace detail {
 template<typename Failable>
 struct as_variant
 {
-    using type = same_const_ref_as_t<Failable, typename std::decay_t<Failable>::Base>;
+    using type = same_const_ref_as_t<Failable, typename std::remove_reference_t<Failable>::Base>;
 };
 
 template<typename Failable>
@@ -25,6 +25,23 @@ as_variant_t<Failable> get_variant(Failable&& f)
 {
     return move_if_not_lvalue<Failable>(f);
 }
+
+template<typename Failable>
+using failable_value_type_t = typename std::remove_reference_t<Failable>::value_type;
+
+template<typename Failable>
+using failable_failure_type_t = typename std::remove_reference_t<Failable>::failure_type;
+
+template<typename Failable>
+using get_value_return_type = decltype(get_value(std::declval<Failable>()));
+
+template<typename Failable>
+using get_failure_return_type = decltype(get_failure(std::declval<Failable>()));
+
+template<typename Failable, typename InvocableResult>
+using if_is_convertible_to_get_value_return_type_of =
+    std::enable_if_t<std::is_convertible<InvocableResult, get_value_return_type<Failable>>::value,
+                     void*>;
 
 } // namespace detail
 
@@ -165,9 +182,10 @@ bool holds_value(const Failable<Failure, Value>& failable)
  * @return The failure.
  */
 template<typename Failable, if_is_failable<Failable> = nullptr>
-decltype(auto) get_failure(Failable&& failable)
+auto get_failure(Failable&& failable)
+    -> detail::same_const_ref_as_t<Failable, detail::failable_failure_type_t<Failable>>
 {
-    return get<typename std::decay_t<Failable>::failure_type>(
+    return get<detail::failable_failure_type_t<Failable>>(
         detail::get_variant(std::forward<Failable>(failable)));
 }
 
@@ -181,10 +199,116 @@ decltype(auto) get_failure(Failable&& failable)
  * @return The value.
  */
 template<typename Failable, if_is_failable<Failable> = nullptr>
-decltype(auto) get_value(Failable&& failable)
+auto get_value(Failable&& failable)
+    -> detail::same_const_ref_as_t<Failable, detail::failable_value_type_t<Failable>>
 {
-    return get<typename std::decay_t<Failable>::value_type>(
+    return get<detail::failable_value_type_t<Failable>>(
         detail::get_variant(std::forward<Failable>(failable)));
+}
+
+/**
+ * @brief Get the value in the `Failable` or default_value if not present.
+ * @related resilient::Failable
+ *
+ * @param failable The `Failable` to get the value from if present.
+ * @param default_value The default value if a value is not present in `Failable`
+ * @return The value in `Failable` if present, default_value otherwise
+ */
+template<typename Failable, if_is_failable<Failable> = nullptr>
+auto get_value_or(Failable&& failable, detail::get_value_return_type<Failable> default_value)
+    -> detail::get_value_return_type<Failable>
+{
+    if (holds_failure(failable)) {
+        return std::forward<decltype(default_value)>(default_value);
+    }
+    return get_value(std::forward<Failable>(failable));
+}
+
+/**
+ * @brief Get the combination of two `Failable`s sharing the same value_type.
+ * @related resilient::Failable
+ *
+ * Get the value combining two `Failable`s.
+ * The value of the first `Failable` is preferred.
+ * The failure of the second `Failable` is preferred.
+ *
+ * @param failable A failable
+ * @param other A failable with a compatible value_type of `failable`.
+ * @return A `Failable`.
+ *         It holds the value of `failable` if it contains a value.
+ *         It holds the value of `other` if it contains a value.
+ *         It holds the failure of `other` if both failables hold a failure.
+ *         The returned type is always a value (not a reference).
+ */
+template<typename Failable,
+         typename OtherFailable,
+         if_is_failable<Failable> = nullptr,
+         if_is_failable<OtherFailable> = nullptr>
+auto get_value_or(Failable&& failable, OtherFailable&& other)
+    -> std::remove_const_t<std::remove_reference_t<OtherFailable>>
+{
+    // We need to always return a value. The reason is that if Failable holds a value then we
+    // need to return an instance of OtherFailable which holds the value.
+    // This means that we need to create it on the stack, and returning a reference would lead to
+    // dangling reference.
+    if (holds_failure(failable)) {
+        return std::forward<OtherFailable>(other);
+    }
+    return get_value(std::forward<Failable>(failable));
+}
+
+/**
+ * @brief Get the value in failable if it holds a value, the returned value of invoking `invocable` otherwise.
+ * @related resilient::Failable
+ * @see get_value_or()
+ *
+ * The function is similar to `get_value_or()` but allows to compute the default value lazily.
+ *
+ * @param failable The `Failable` to get the value from if present.
+ * @param invocable The object to call if failable does not hold a value.
+ * @return The value stored in failable or the value returned by invocable.
+ */
+template<typename Failable,
+         typename Invocable,
+         typename InvocableResult = detail::invoke_result_t<Invocable>,
+         if_is_failable<Failable> = nullptr,
+         detail::if_is_convertible_to_get_value_return_type_of<Failable, InvocableResult> = nullptr>
+auto get_value_or_invoke(Failable&& failable, Invocable&& invocable)
+    -> detail::get_value_return_type<Failable>
+{
+    if (holds_failure(failable)) {
+        return std::forward<Invocable>(invocable)();
+    }
+    return get_value(std::forward<Failable>(failable));
+}
+
+/**
+ * @brief Get the combination of `failable` and the result of invoking `invocable`.
+ * @related resilient::Failable
+ * @see get_value_or
+ *
+ * Equivalent to `get_value_or()` with a `Failable` which is provided by lazily calling
+ * `invocable`.
+ * `invocable` is only called if `failable` does not contain a value.
+ *
+ * @param failable A `Failable`.
+ * @param invocable A function which returns a `Failable` with value_type compatible to
+ *                  the one of `failable`.
+ * @return The combination of `failable` and the result of `invocable`.
+ *         See `get_value_or()` for what the result contains.
+ */
+template<typename Failable,
+         typename Invocable,
+         typename InvocableResult = detail::invoke_result_t<Invocable>,
+         if_is_failable<Failable> = nullptr,
+         if_is_failable<InvocableResult> = nullptr>
+auto get_value_or_invoke(Failable&& failable, Invocable&& invocable)
+    -> std::remove_const_t<std::remove_reference_t<InvocableResult>>
+{
+    if (holds_failure(failable)) {
+        return std::forward<Invocable>(invocable)();
+    }
+    return get_value(std::forward<Failable>(failable));
 }
 
 /**
