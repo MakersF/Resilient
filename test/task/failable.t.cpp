@@ -5,6 +5,8 @@
 
 #include <resilient/task/failable.hpp>
 
+#include <common/utility.hpp>
+
 using namespace resilient;
 
 namespace {
@@ -20,12 +22,6 @@ struct Error
 struct Error2
 {
 };
-
-template<typename T>
-const T& as_const(T& t)
-{
-    return t;
-}
 
 template<typename T>
 struct Callable
