@@ -60,7 +60,7 @@ using argpack_element_t = std::tuple_element_t<N, std::tuple<Args...>>;
 template<typename T, typename Q>
 struct same_ref_as
 {
-    using type = std::add_rvalue_reference_t<std::remove_reference_t<Q>>;
+    using type = std::remove_reference_t<Q>;
 };
 template<typename T, typename Q>
 struct same_ref_as<T&, Q>

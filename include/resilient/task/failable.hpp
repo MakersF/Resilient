@@ -13,13 +13,20 @@ namespace detail {
 template<typename Failable>
 struct as_variant
 {
-    using type = same_const_ref_as_t<Failable, typename std::remove_reference_t<Failable>::Base>;
+    // The resulting type of forwarding the Failable::Base
+    using type = decltype(move_if_not_lvalue<Failable>(
+        std::declval<
+            same_const_as_t<Failable, typename std::remove_reference_t<Failable>::Base>>()));
 };
 
 template<typename Failable>
 using as_variant_t = typename as_variant<Failable>::type;
 
-// Allow to access the Failable as if it was a varian, so that all the variant functions can be used
+// Allow to access the Failable as if it was a varian, so that all the variant functions can be used.
+// Note: the return must always be a reference otherwise we copy the variant, and boost fails as it can't
+//       create a variant from a Failable.
+//       std::variant works, not sure why (probably because get_variant is friend and can see that Failable
+//       derives from variant)
 template<typename Failable>
 as_variant_t<Failable> get_variant(Failable&& f)
 {
