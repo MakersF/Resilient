@@ -7,6 +7,7 @@
 #include <boost/variant.hpp>
 #include <boost/version.hpp>
 
+#include <resilient/detail/invoke.hpp>
 #include <resilient/detail/utilities.hpp>
 
 // Before version 1.65 boost does not support rvalues in strict_get
