@@ -26,5 +26,14 @@ Find the [API documentation at ReadTheDocs](http://resilient.readthedocs.io/en/l
 # Requirements
 
 - C++14
-- gcc-6 or newer (gcc-5 has a bug)
 - boost (not required if using c++17)
+- gcc-6 or newer (gcc-5 has a bug)
+
+# Running the test
+
+The project comes with some docker images to run the tests with different compilers and version of the standard.
+
+Run `make test` in the project root to run all of the tests.
+
+If you want to run the tests with a specific compiler and standard version you can do so.
+For example run `make test-resilient-ubuntu16-gcc6-cpp17` to run on the image with ubuntu 16.04 LTS and gcc6 as default compiler, using `c++17` as standard.

@@ -6,4 +6,7 @@ build/
 vendor/
 doc/**/build
 
+# Containers
+buildimg/.docker*
+
 # Documentation
