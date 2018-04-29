@@ -1,6 +1,7 @@
 #pragma once
 
 #include <type_traits>
+#include <utility>
 
 #if __cplusplus >= 201703L
 #include <functional>
