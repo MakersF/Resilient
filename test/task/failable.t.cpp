@@ -39,18 +39,24 @@ using StrictCallable = ::testing::StrictMock<Callable<T>>;
 TEST(Failable_get_failure, EnsureCorrectReturnType)
 {
     Failable<Error, Value> failable{Error()};
-    static_assert(std::is_same<decltype(get_failure(failable)), Error&>::value);
+    static_assert(std::is_same<decltype(get_failure(failable)), Error&>::value,
+                  "Wrong get_failure return type");
     static_assert(
-        std::is_same<decltype(get_failure(test::as_const(failable))), const Error&>::value);
-    static_assert(std::is_same<decltype(get_failure(std::move(failable))), Error>::value);
+        std::is_same<decltype(get_failure(test::as_const(failable))), const Error&>::value,
+        "Wrong get_failure return type");
+    static_assert(std::is_same<decltype(get_failure(std::move(failable))), Error>::value,
+                  "Wrong get_failure return type");
 }
 
 TEST(Failable_get_value, EnsureCorrectReturnType)
 {
     Failable<Error, Value> failable{Error()};
-    static_assert(std::is_same<decltype(get_value(failable)), Value&>::value);
-    static_assert(std::is_same<decltype(get_value(test::as_const(failable))), const Value&>::value);
-    static_assert(std::is_same<decltype(get_value(std::move(failable))), Value>::value);
+    static_assert(std::is_same<decltype(get_value(failable)), Value&>::value,
+                  "Wrong get_value return type");
+    static_assert(std::is_same<decltype(get_value(test::as_const(failable))), const Value&>::value,
+                  "Wrong get_value return type");
+    static_assert(std::is_same<decltype(get_value(std::move(failable))), Value>::value,
+                  "Wrong get_value return type");
 }
 
 TEST(Failable_get_value_or_with_value, ContainsValue)
@@ -71,14 +77,18 @@ TEST(Failable_get_value_or_with_value, EnsureCorrectReturnType)
 {
     Failable<Error, Value> failable{Error()};
     Value fallback;
-    static_assert(std::is_same<decltype(get_value_or(failable, fallback)), Value&>::value);
+    static_assert(std::is_same<decltype(get_value_or(failable, fallback)), Value&>::value,
+                  "Wrong get_value_or return type");
     // Fallback being less const is fine
     static_assert(std::is_same<decltype(get_value_or(test::as_const(failable), fallback)),
-                               const Value&>::value);
+                               const Value&>::value,
+                  "Wrong get_value_or return type");
     static_assert(
         std::is_same<decltype(get_value_or(test::as_const(failable), test::as_const(fallback))),
-                     const Value&>::value);
-    static_assert(std::is_same<decltype(get_value_or(std::move(failable), Value())), Value>::value);
+                     const Value&>::value,
+        "Wrong get_value_or return type");
+    static_assert(std::is_same<decltype(get_value_or(std::move(failable), Value())), Value>::value,
+                  "Wrong get_value_or return type");
 }
 
 TEST(Failable_get_value_or_with_failable, FirstContainsValue)
@@ -112,16 +122,21 @@ TEST(Failable_get_value_or_with_failable, EnsureCorrectReturnType)
     Failable<Error, Value> failable{Error()};
     Failable<Error2, Value> fallback{Error2()};
     static_assert(
-        std::is_same<decltype(get_value_or(failable, fallback)), Failable<Error2, Value>>::value);
+        std::is_same<decltype(get_value_or(failable, fallback)), Failable<Error2, Value>>::value,
+        "Wrong get_value_or return type");
     static_assert(std::is_same<decltype(get_value_or(test::as_const(failable), fallback)),
-                               Failable<Error2, Value>>::value);
+                               Failable<Error2, Value>>::value,
+                  "Wrong get_value_or return type");
     static_assert(
         std::is_same<decltype(get_value_or(test::as_const(failable), test::as_const(fallback))),
-                     Failable<Error2, Value>>::value);
+                     Failable<Error2, Value>>::value,
+        "Wrong get_value_or return type");
     static_assert(std::is_same<decltype(get_value_or(std::move(failable), fallback)),
-                               Failable<Error2, Value>>::value);
+                               Failable<Error2, Value>>::value,
+                  "Wrong get_value_or return type");
     static_assert(std::is_same<decltype(get_value_or(std::move(failable), std::move(fallback))),
-                               Failable<Error2, Value>>::value);
+                               Failable<Error2, Value>>::value,
+                  "Wrong get_value_or return type");
 }
 
 TEST(Failable_get_value_or_invoke_with_value, ContainsValue)
@@ -146,15 +161,19 @@ TEST(Failable_get_value_or_invoke_with_value, EnsureCorrectReturnType)
     Callable<Value&> returnRef;
     Callable<const Value&> returnConstRef;
     Callable<Value> returnVal;
-    static_assert(std::is_same<decltype(get_value_or_invoke(failable, returnRef)), Value&>::value);
+    static_assert(std::is_same<decltype(get_value_or_invoke(failable, returnRef)), Value&>::value,
+                  "Wrong get_value_or_invoke return type");
     // Fallback being less const is fine
     static_assert(std::is_same<decltype(get_value_or_invoke(test::as_const(failable), returnRef)),
-                               const Value&>::value);
+                               const Value&>::value,
+                  "Wrong get_value_or_invoke return type");
     static_assert(
         std::is_same<decltype(get_value_or_invoke(test::as_const(failable), returnConstRef)),
-                     const Value&>::value);
+                     const Value&>::value,
+        "Wrong get_value_or_invoke return type");
     static_assert(
-        std::is_same<decltype(get_value_or_invoke(std::move(failable), returnVal)), Value>::value);
+        std::is_same<decltype(get_value_or_invoke(std::move(failable), returnVal)), Value>::value,
+        "Wrong get_value_or_invoke return type");
 }
 
 TEST(Failable_get_value_or_invoke_with_failable, FirstContainsValue)
@@ -193,13 +212,17 @@ TEST(Failable_get_value_or_invoke_with_failable, EnsureCorrectReturnType)
     Callable<const Failable<Error2, Value>&> returnConstRef;
     Callable<Failable<Error2, Value>> returnVal;
     static_assert(std::is_same<decltype(get_value_or_invoke(failable, returnRef)),
-                               Failable<Error2, Value>>::value);
+                               Failable<Error2, Value>>::value,
+                  "Wrong get_value_or_invoke return type");
     // Fallback being less const is fine
     static_assert(std::is_same<decltype(get_value_or_invoke(test::as_const(failable), returnRef)),
-                               Failable<Error2, Value>>::value);
+                               Failable<Error2, Value>>::value,
+                  "Wrong get_value_or_invoke return type");
     static_assert(
         std::is_same<decltype(get_value_or_invoke(test::as_const(failable), returnConstRef)),
-                     Failable<Error2, Value>>::value);
+                     Failable<Error2, Value>>::value,
+        "Wrong get_value_or_invoke return type");
     static_assert(std::is_same<decltype(get_value_or_invoke(std::move(failable), returnVal)),
-                               Failable<Error2, Value>>::value);
+                               Failable<Error2, Value>>::value,
+                  "Wrong get_value_or_invoke return type");
 }
