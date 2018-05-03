@@ -4,16 +4,18 @@ UBUNTU16:=resilient-ubuntu16
 UBUNTU16-GCC6:=$(UBUNTU16)-gcc6
 UBUNTU16-GCC7:=$(UBUNTU16)-gcc7
 
+DOCKER?=docker
+
 default: test
 
 # Build the base image
 buildimg/.docker-build-image-resilient-ubuntu16: buildimg/$(UBUNTU16).Dockerfile
-	docker build -t $(UBUNTU16) -f $< .
+	$(DOCKER) build -t $(UBUNTU16) -f $< .
 	@touch $@
 
 # Build any image which depends on the base image
 buildimg/.docker-build-image-$(UBUNTU16)-%: buildimg/$(UBUNTU16)-%.Dockerfile buildimg/.docker-build-image-$(UBUNTU16)
-	docker build -t $(UBUNTU16)-$* -f $< .
+	$(DOCKER) build -t $(UBUNTU16)-$* -f $< .
 	@touch $@
 
 
@@ -33,7 +35,7 @@ docker-images-clean:
 # the bash command provided.
 define test-target
 test-$1-$2: buildimg/.docker-build-image-$1
-	@docker run \
+	@$(DOCKER) run \
 		--rm \
 		-t \
 		-v $(PROJECT_PATH):/src:ro \
