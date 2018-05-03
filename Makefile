@@ -50,14 +50,14 @@ endef
 
 
 # Define the test targets
-$(eval $(call test-target,$(UBUNTU16),cpp14,cmake /src && make && make test))
-$(eval $(call test-target,$(UBUNTU16),cpp17,cmake -D CPP17=ON /src && make && make test))
-
-$(eval $(call test-target,$(UBUNTU16-GCC6),cpp14,cmake /src && make && make test))
-$(eval $(call test-target,$(UBUNTU16-GCC6),cpp17,cmake -D CPP17=ON /src && make && make test))
-
-$(eval $(call test-target,$(UBUNTU16-GCC7),cpp14,cmake /src && make && make test))
 $(eval $(call test-target,$(UBUNTU16-GCC7),cpp17,cmake -D CPP17=ON /src && make && make test))
+$(eval $(call test-target,$(UBUNTU16-GCC7),cpp14,cmake /src && make && make test))
+
+$(eval $(call test-target,$(UBUNTU16-GCC6),cpp17,cmake -D CPP17=ON /src && make && make test))
+$(eval $(call test-target,$(UBUNTU16-GCC6),cpp14,cmake /src && make && make test))
+
+$(eval $(call test-target,$(UBUNTU16),cpp17,cmake -D CPP17=ON /src && make && make test))
+$(eval $(call test-target,$(UBUNTU16),cpp14,cmake /src && make && make test))
 
 # Run the tests on all the images
 test: $(TEST_TARGETS)
