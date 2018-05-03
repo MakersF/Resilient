@@ -74,7 +74,7 @@ struct StatelessDetector
     template<typename T>
     decltype(auto) postRun(NoState, ICallResult<T>& result) const
     {
-        return static_cast<Detector*>(this)->detect(result);
+        return static_cast<Detector const*>(this)->detect(result);
     }
 };
 
