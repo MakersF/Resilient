@@ -3,7 +3,9 @@
 #include <resilient/detector/callresult.hpp>
 #include <resilient/detector/never.hpp>
 #include <resilient/detector/returns.hpp>
+#include <resilient/detector/throws.hpp>
 
+#include <exception>
 #include <utility>
 
 #include <gmock/gmock.h>
@@ -53,6 +55,52 @@ TEST_F(ReturnsDetector_F, When_ResultValueIsNotEqualToExpected_Then_ReturnsNoFai
 
     auto state = d_returns.preRun();
     auto detected_failure = d_returns.postRun(std::move(state), d_callresult);
+    EXPECT_FALSE(holds_failure(detected_failure));
+}
+
+TEST(ThrowsDetector, When_NoExceptionThrown_Then_ReturnsNoFailure)
+{
+    CallResultMock<int> callresult;
+    Throws<std::runtime_error> throws;
+
+    EXPECT_CALL(callresult, isException()).WillOnce(testing::Return(false));
+
+    auto state = throws.preRun();
+    auto detected_failure = throws.postRun(std::move(state), callresult);
+    EXPECT_FALSE(holds_failure(detected_failure));
+}
+
+TEST(ThrowsDetector, When_ExpectedTypeOfExceptionIsThrown_Then_ReturnsFailure)
+{
+    CallResultMock<int> callresult;
+    Throws<std::runtime_error> throws;
+
+    EXPECT_CALL(callresult, isException()).WillOnce(testing::Return(true));
+
+    EXPECT_CALL(callresult, getException())
+        .WillOnce(testing::ReturnRefOfCopy(std::make_exception_ptr(std::runtime_error("Error"))));
+
+    auto state = throws.preRun();
+    auto detected_failure = throws.postRun(std::move(state), callresult);
+    EXPECT_TRUE(holds_failure(detected_failure));
+}
+
+TEST(ThrowsDetector, When_DifferentTypeOfExceptionIsThrown_Then_ReturnsNoFailure)
+{
+    CallResultMock<int> callresult;
+    Throws<std::runtime_error> throws;
+
+    struct DifferentError
+    {
+    };
+
+    EXPECT_CALL(callresult, isException()).WillOnce(testing::Return(true));
+
+    EXPECT_CALL(callresult, getException())
+        .WillOnce(testing::ReturnRefOfCopy(std::make_exception_ptr(DifferentError{})));
+
+    auto state = throws.preRun();
+    auto detected_failure = throws.postRun(std::move(state), callresult);
     EXPECT_FALSE(holds_failure(detected_failure));
 }
 
