@@ -1,7 +1,5 @@
 #pragma once
 
-#include <type_traits>
-
 #include <resilient/detector/basedetector.hpp>
 #include <resilient/detector/callresult.hpp>
 
