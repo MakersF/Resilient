@@ -4,6 +4,10 @@ UBUNTU16:=resilient-ubuntu16
 UBUNTU16-GCC6:=$(UBUNTU16)-gcc6
 UBUNTU16-GCC7:=$(UBUNTU16)-gcc7
 
+BUILD_COMMAND_CPP17:=cmake -D CPP17=ON /src && make && make test
+BUILD_COMMAND_CPP14:=cmake /src && make && make test
+BUILD_ENV_VARS:=GTEST_COLOR=1 CTEST_OUTPUT_ON_FAILURE=1
+
 DOCKER?=docker
 
 default: test
@@ -29,6 +33,7 @@ docker-images-clean:
 #  - name of the image to use
 #  - name of the test
 #  - command to execute in the image
+#  - environment variables to be set in the image
 #
 # A test target runs into an image, mounting the source directory into /src
 # and a unique build directory, based on the name of the test, into /build,
@@ -40,6 +45,7 @@ test-$1-$2: buildimg/.docker-build-image-$1
 		-t \
 		-v $(PROJECT_PATH):/src:ro \
 		-v $(PROJECT_PATH)/build/$1-$2:/build \
+		$(foreach env,$4,--env $(env)) \
 		-w /build \
 		$1 \
 		/bin/bash -c "$3"
@@ -50,14 +56,14 @@ endef
 
 
 # Define the test targets
-$(eval $(call test-target,$(UBUNTU16-GCC7),cpp17,cmake -D CPP17=ON /src && make && make test))
-$(eval $(call test-target,$(UBUNTU16-GCC7),cpp14,cmake /src && make && make test))
+$(eval $(call test-target,$(UBUNTU16-GCC7),cpp17,$(BUILD_COMMAND_CPP17),$(BUILD_ENV_VARS)))
+$(eval $(call test-target,$(UBUNTU16-GCC7),cpp14,$(BUILD_COMMAND_CPP14),$(BUILD_ENV_VARS)))
 
-$(eval $(call test-target,$(UBUNTU16-GCC6),cpp17,cmake -D CPP17=ON /src && make && make test))
-$(eval $(call test-target,$(UBUNTU16-GCC6),cpp14,cmake /src && make && make test))
+$(eval $(call test-target,$(UBUNTU16-GCC6),cpp17,$(BUILD_COMMAND_CPP17),$(BUILD_ENV_VARS)))
+$(eval $(call test-target,$(UBUNTU16-GCC6),cpp14,$(BUILD_COMMAND_CPP14),$(BUILD_ENV_VARS)))
 
-$(eval $(call test-target,$(UBUNTU16),cpp17,cmake -D CPP17=ON /src && make && make test))
-$(eval $(call test-target,$(UBUNTU16),cpp14,cmake /src && make && make test))
+$(eval $(call test-target,$(UBUNTU16),cpp17,$(BUILD_COMMAND_CPP17),$(BUILD_ENV_VARS)))
+$(eval $(call test-target,$(UBUNTU16),cpp14,$(BUILD_COMMAND_CPP14),$(BUILD_ENV_VARS)))
 
 # Run the tests on all the images
 test: $(TEST_TARGETS)
