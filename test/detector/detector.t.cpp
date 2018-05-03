@@ -37,7 +37,7 @@ struct ReturnsDetector_F : testing::Test
     CallResultMock<int> d_callresult;
 };
 
-TEST_F(ReturnsDetector_F, ReturnMatches)
+TEST_F(ReturnsDetector_F, When_ResultValueIsEqualToExpected_Then_ReturnsFailure)
 {
     EXPECT_CALL(d_callresult, isException())
     .WillOnce(testing::Return(false));
@@ -50,7 +50,7 @@ TEST_F(ReturnsDetector_F, ReturnMatches)
     EXPECT_TRUE(holds_failure(detected_failure));
 }
 
-TEST_F(ReturnsDetector_F, ReturnDoesntMatch)
+TEST_F(ReturnsDetector_F, When_ResultValueIsNotEqualToExpected_Then_ReturnsNoFailure)
 {
     EXPECT_CALL(d_callresult, isException())
     .WillOnce(testing::Return(false));
@@ -134,7 +134,7 @@ TEST(AnyDetector, When_MultipleMatches_Then_SameFailureAsTheFirstMatching)
     EXPECT_TRUE(holds_alternative<ErrorReturn>(detected_failure));
 }
 
-TEST(NeverDetector, DoesNotMatch)
+TEST(NeverDetector, When_Called_Then_ImmediatelyReturnsNoFailure)
 {
     CallResultMock<int> callresult;
     Never never;
