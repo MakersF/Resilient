@@ -60,7 +60,7 @@ decltype(auto) foldInvoke(Tuple&& tuple, Callable&& callable, Args&&... args)
             std::forward<Tuple>(tuple),
             std::forward<Callable>(callable),
             std::forward<Args>(args)...);
-};
+}
 
 } // namespace detail
 } // namespace resilient
