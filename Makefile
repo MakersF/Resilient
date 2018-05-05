@@ -4,8 +4,9 @@ UBUNTU16:=resilient-ubuntu16
 UBUNTU16-GCC6:=$(UBUNTU16)-gcc6
 UBUNTU16-GCC7:=$(UBUNTU16)-gcc7
 
-BUILD_COMMAND_CPP17:=cmake -D CPP17=ON /src && make && make test
-BUILD_COMMAND_CPP14:=cmake /src && make && make test
+# For some make weirdness we need to escape 4 times the $
+BUILD_COMMAND_CPP17:=cmake -D CPP17=ON $$$$SRC && make && make test
+BUILD_COMMAND_CPP14:=cmake $$$$SRC && make && make test
 BUILD_ENV_VARS:=GTEST_COLOR=1 CTEST_OUTPUT_ON_FAILURE=1
 
 DOCKER?=docker
@@ -33,22 +34,31 @@ docker-images-clean:
 #  - name of the image to use
 #  - name of the test
 #  - command to execute in the image
-#  - environment variables to be set in the image
+#  - environment variables to be set in the image (space separated list of ENV=VALUE)
 #
-# A test target runs into an image, mounting the source directory into /src
-# and a unique build directory, based on the name of the test, into /build,
-# the bash command provided.
+# A test target runs into an image, mounting the source directory into folder which path
+# is stored in $SRC and a unique build directory, based on the name of the test, into /build.
+# It executed the provided command in the /build directory.
+#
+# ------- Implementation Notice -------
+# We mount the current project directory in the same path on the image.
+# To allow the command to access it we define an env variable SRC
+# which specifies the path.
+#
+# To support the user defined environment varibles we expand the list
+# prepending --env.
 define test-target
 test-$1-$2: buildimg/.docker-build-image-$1
 	@$(DOCKER) run \
 		--rm \
 		-t \
-		-v $(PROJECT_PATH):/src:ro \
+		-v $(PROJECT_PATH):$(PROJECT_PATH):ro \
 		-v $(PROJECT_PATH)/build/$1-$2:/build \
+		--env SRC="$(PROJECT_PATH)" \
 		$(foreach env,$4,--env $(env)) \
 		-w /build \
 		$1 \
-		/bin/bash -c "$3"
+		/bin/bash -c '$3'
 
 TEST_TARGETS_$1 += test-$1-$2
 TEST_TARGETS += test-$1-$2
