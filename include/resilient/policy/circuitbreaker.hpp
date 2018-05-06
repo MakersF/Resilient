@@ -12,18 +12,18 @@
 namespace resilient {
 
 /**
- * @brief Indicate a failure because the `CircuitBreaker` was open.
- * @related resilient::CircuitBreaker
+ * @brief Indicate a failure because the `Circuitbreaker` was open.
+ * @related resilient::Circuitbreaker
  */
-struct CircuitBreakerIsOpen
+struct CircuitbreakerIsOpen
 {
 };
 
 /**
- * @brief Interface to specify the algorithm the `CircuitBreaker` should use.
- * @related resilient::CircuitBreaker
+ * @brief Interface to specify the algorithm the `Circuitbreaker` should use.
+ * @related resilient::Circuitbreaker
  */
-class ICircuitBreakerStrategy
+class ICircuitbreakerStrategy
 {
 public:
     /**
@@ -44,7 +44,7 @@ public:
      */
     virtual void registerSuccess() = 0;
 
-    virtual ~ICircuitBreakerStrategy() {}
+    virtual ~ICircuitbreakerStrategy() {}
 };
 
 /**
@@ -54,40 +54,40 @@ public:
  * A missbehaving dependency might take a long time to respond.
  * When many operations depend on it the slowdown can be propagated to the rest of the system.
  *
- * The `CircuitBreaker` uses an algorithm (implemented in the strategy) to determine when
+ * The `Circuitbreaker` uses an algorithm (implemented in the strategy) to determine when
  * to stop contacting the dependency and just assume a failure.
  *
  * This keeps limit the performance impact a dependency can cause to the whole system.
  *
  */
-class CircuitBreaker
+class Circuitbreaker
 {
 private:
     template<typename Callable, typename... Args>
     using return_type_t =
-        add_failure_to_noref_t<forward_result_of_t<Callable, Args...>, CircuitBreakerIsOpen>;
+        add_failure_to_noref_t<forward_result_of_t<Callable, Args...>, CircuitbreakerIsOpen>;
 
 public:
     /**
-     * @brief Construct a `CircuitBreaker` with the given strategy.
+     * @brief Construct a `Circuitbreaker` with the given strategy.
      */
-    CircuitBreaker(std::unique_ptr<ICircuitBreakerStrategy>&& strategy)
+    Circuitbreaker(std::unique_ptr<ICircuitbreakerStrategy>&& strategy)
     : d_strategy(std::move(strategy))
     {
     }
 
     /**
-     * @brief Execute the task if the `CircuitBreaker` is not open.
+     * @brief Execute the task if the `Circuitbreaker` is not open.
      *
      * @param callable The task to execute
      * @param args... The arguments to the task
-     * @return The result of invoking the task, or CircuitBreakerIsOpen if the task was not executed.
+     * @return The result of invoking the task, or CircuitbreakerIsOpen if the task was not executed.
      */
     template<typename Callable, typename... Args>
     return_type_t<Callable, Args...> execute(Callable&& callable, Args&&... args)
     {
         if (not d_strategy->allowCall()) {
-            return from_failure<return_type_t<Callable, Args...>>(CircuitBreakerIsOpen());
+            return from_failure<return_type_t<Callable, Args...>>(CircuitbreakerIsOpen());
         }
 
         // Invoke the task and keep the result
@@ -110,7 +110,7 @@ public:
     }
 
 private:
-    std::unique_ptr<ICircuitBreakerStrategy> d_strategy;
+    std::unique_ptr<ICircuitbreakerStrategy> d_strategy;
 };
 
 } // namespace resilient

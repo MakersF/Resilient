@@ -9,7 +9,7 @@ using namespace resilient;
 
 namespace {
 
-struct CircuiBreakerStrategyMock : ICircuitBreakerStrategy
+struct CircuitbreakerStrategyMock : ICircuitbreakerStrategy
 {
     MOCK_METHOD0(allowCall, bool());
     MOCK_METHOD0(registerFailure, void());
@@ -18,16 +18,16 @@ struct CircuiBreakerStrategyMock : ICircuitBreakerStrategy
 
 } // namespace
 
-TEST_F(MultiPolicies, CircuitBreakerOpenReturnsError)
+TEST_F(MultiPolicies, CircuitbreakerOpenReturnsError)
 {
-    std::unique_ptr<CircuiBreakerStrategyMock> strategy{
-        new testing::StrictMock<CircuiBreakerStrategyMock>()};
+    std::unique_ptr<CircuitbreakerStrategyMock> strategy{
+        new testing::StrictMock<CircuitbreakerStrategyMock>()};
 
     EXPECT_CALL(d_callable, call()).Times(0);
     EXPECT_CALL(*strategy, allowCall()).WillOnce(testing::Return(false));
 
-    CircuitBreaker cb(std::move(strategy));
+    Circuitbreaker cb(std::move(strategy));
     auto result = cb.execute(d_callable);
     EXPECT_TRUE(holds_failure(result));
-    EXPECT_TRUE(holds_alternative<CircuitBreakerIsOpen>(get_failure(result)));
+    EXPECT_TRUE(holds_alternative<CircuitbreakerIsOpen>(get_failure(result)));
 }
