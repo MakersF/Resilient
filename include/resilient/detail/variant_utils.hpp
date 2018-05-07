@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cassert>
-#include <resilient/common/variant.hpp>
 #include <type_traits>
+
+#include <resilient/common/variant.hpp>
+#include <resilient/detail/invoke.hpp>
 
 namespace resilient {
 namespace detail {
@@ -87,15 +89,26 @@ Type construct_from_variant(Source&& source)
     return visit(ConstructVisitor<Type>{}, std::forward<Source>(source));
 }
 
-template<typename F1, typename F2>
+template<typename F1, typename... Fs>
 struct Overloaded
 : F1
-, F2
+, Overloaded<Fs...>
 {
-    Overloaded(F1&& f1, F2&& f2) : F1(std::forward<F1>(f1)), F2(std::forward<F2>(f2)) {}
+    Overloaded(F1&& f1, Fs&&... fs)
+    : F1(std::forward<F1>(f1)), Overloaded<Fs...>(std::forward<Fs>(fs)...)
+    {
+    }
 
     using F1::operator();
-    using F2::operator();
+    using Overloaded<Fs...>::operator();
+};
+
+template<typename F>
+struct Overloaded<F> : F
+{
+    Overloaded(F&& f) : F(std::forward<F>(f)) {}
+
+    using F::operator();
 };
 
 // Add the result_type using to a visitor
@@ -113,11 +126,11 @@ struct AddResultTypeAlias : F
     }
 };
 
-// Create a visitor from two callable (lambdas, ...)
-template<typename ResultType, typename F1, typename F2>
-AddResultTypeAlias<ResultType, Overloaded<F1, F2>> overload(F1&& f1, F2&& f2)
+// Create a visitor from several callable (lambdas, ...)
+template<typename ResultType, typename... Fs>
+AddResultTypeAlias<ResultType, Overloaded<Fs...>> overload(Fs&&... fs)
 {
-    return {Overloaded<F1, F2>{std::forward<F1>(f1), std::forward<F2>(f2)}};
+    return {Overloaded<Fs...>{std::forward<Fs>(fs)...}};
 }
 
 } // namespace detail
