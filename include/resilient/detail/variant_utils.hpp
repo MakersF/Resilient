@@ -124,6 +124,12 @@ struct AddResultTypeAlias : F
     {
         return (*static_cast<F*>(this))(std::forward<Args>(args)...);
     }
+
+    template<typename... Args>
+    result_type operator()(Args&&... args) const
+    {
+        return (*static_cast<const F*>(this))(std::forward<Args>(args)...);
+    }
 };
 
 // Create a visitor from several callable (lambdas, ...)
