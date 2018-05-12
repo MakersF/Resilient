@@ -1,5 +1,7 @@
 #pragma once
 
+#include <resilient/common/variant.hpp>
+#include <resilient/detail/variant_utils.hpp>
 #include <resilient/task/failable.hpp>
 
 namespace resilient {
@@ -18,13 +20,32 @@ Failable from_failure(Failure&& failure)
     return Failable{typename Failable::failure_type{std::forward<Failure>(failure)}};
 }
 
+namespace {
+
+// Not all variants can be constructed from a narrower variant, so if the failure is a
+// variant we use construct_from_variant to construct it.
+template<typename FailureType, typename Variant, if_is_variant<Variant> = nullptr>
+FailureType from_narrower_failure(Variant&& failure)
+{
+    return detail::construct_from_variant<FailureType>(std::forward<Variant>(failure));
+}
+
+// For non variant types we construct the FailureType with its constructor
+template<typename FailureType, typename Failure, if_is_not_variant<Failure> = nullptr>
+FailureType from_narrower_failure(Failure&& failure)
+{
+    return FailureType{std::forward<Failure>(failure)};
+}
+
+} // namespace
+
 /**
  * @brief Construct a `Failable` from another `Failable` with the same `value_type` and a narrower
  * `failure_type`.
  * @related resilient::Failable
  *
- * A `failure_type` is narrower than another one if the variant which represents it can hold less
- * types than the second one. For example in `using B = resilient::add_failure_to_failable_t<A,
+ * A `failure_type` `A` is narrower than another type `B` if the variant which represents it can hold a
+ * subset of the types `B` can hold. For example in `using B = resilient::add_failure_to_failable_t<A,
  * NewFailure>`, `A` has a narrower `failure_type` than `B` since `A` can not represent the failure
  * `NewFailure`.
  *
@@ -41,8 +62,8 @@ Failable from_narrower_failable(OtherFailable&& failable)
     }
     else
     {
-        return Failable{detail::construct_from_variant<FailureType>(
-            get_failure(std::forward<OtherFailable>(failable)))};
+        return Failable{
+            from_narrower_failure<FailureType>(get_failure(std::forward<OtherFailable>(failable)))};
     }
 }
 

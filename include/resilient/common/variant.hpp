@@ -51,6 +51,16 @@ using if_is_variant = std::enable_if_t<is_variant<std::decay_t<T>>::value, void*
 
 /**
  * @ingroup Common
+ * @brief SFINAE type which is valid if the type is not a variant.
+ * @related resilient::Variant
+ *
+ * @tparam T The type that should be a variant
+ */
+template<typename T>
+using if_is_not_variant = std::enable_if_t<not is_variant<std::decay_t<T>>::value, void*>;
+
+/**
+ * @ingroup Common
  * @brief Check whether the Variant contains a type
  * @related resilient::Variant
  * @see http://en.cppreference.com/w/cpp/utility/variant

@@ -18,6 +18,21 @@ struct CircuitbreakerStrategyMock : ICircuitbreakerStrategy
 
 } // namespace
 
+TEST_F(SinglePolicies, CircuitbreakerOpenReturnsError)
+{
+    std::unique_ptr<CircuitbreakerStrategyMock> strategy{
+        new testing::StrictMock<CircuitbreakerStrategyMock>()};
+
+    EXPECT_CALL(d_callable, call()).WillOnce(::testing::Return(Failure()));
+    EXPECT_CALL(*strategy, allowCall()).WillOnce(testing::Return(true));
+    EXPECT_CALL(*strategy, registerFailure()).Times(1);
+
+    Circuitbreaker cb(std::move(strategy));
+    auto result = cb.execute(d_callable);
+    EXPECT_TRUE(holds_failure(result));
+    EXPECT_TRUE(holds_alternative<Failure>(get_failure(result)));
+}
+
 TEST_F(MultiPolicies, CircuitbreakerOpenReturnsError)
 {
     std::unique_ptr<CircuitbreakerStrategyMock> strategy{
