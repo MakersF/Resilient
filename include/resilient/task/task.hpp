@@ -44,12 +44,6 @@ public:
     using std::runtime_error::runtime_error;
 };
 
-class BadImplementationError : std::runtime_error // Should we use std::terminate instead?
-{
-public:
-    using std::runtime_error::runtime_error;
-};
-
 namespace detail {
 
 template<typename T>
@@ -114,38 +108,29 @@ auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&.
     using Result = detail::invoke_result_t<Callable, Args...>;
     using _Failable = Failable<DetectorFailure, Result>;
 
+    struct Nothing
+    {
+    };
+    using TempResultHolder = Variant<Nothing, Result>;
+
+    TempResultHolder maybeResult{Nothing()};
+
     decltype(auto) state{failureDetector.preRun()};
 
-    // There is a bit of duplication in the two try branches. Can that be factored out?
     try
     {
-        _Failable result{
-            detail::invoke(std::forward<Callable>(callable), std::forward<Args>(args)...)};
-        detail::OperationResult<Result> operationResult{get_value(result)};
-        // TODO this might throw! Big problem if it does: it's going to be considered as if result
-        // threw, and state is moved twice
-        decltype(auto) failure{failureDetector.postRun(std::move(state), operationResult)};
-        if (holds_failure(failure)) {
-            // Move the failure from the failure into the result.
-            // In this process we ignore the NoFailure type as it is not a valid state for the
-            // result.
-            visit(
-                detail::make_ignoretype<NoFailure>(detail::AssignVisitor<decltype(result)>{result}),
-                std::forward<decltype(failure)>(failure));
-        }
-        return std::move(result);
-    }
-    catch (const BadImplementationError&)
-    {
-        throw; // Reraise
+        maybeResult = detail::invoke(std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
     catch (...)
     {
         auto current_exception = std::current_exception();
         detail::OperationResult<Result> operationResult{current_exception};
-        decltype(auto) failure{failureDetector.postRun(std::move(state), operationResult)};
+        // This might throw, but it's not a problem
+        decltype(auto) failure{
+            failureDetector.postRun(std::forward<decltype(state)>(state), operationResult)};
         if (not operationResult.isExceptionConsumed()) {
             std::rethrow_exception(current_exception);
+            assert(false);
         }
         else if (holds_failure(failure))
         {
@@ -164,6 +149,24 @@ auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&.
                 "Task throwed exception: no failure was detected but the exception was consumed.");
         }
     }
+
+    // The call did not throw, so the variant holds a result
+    assert(holds_alternative<Result>(maybeResult));
+
+    Result result{get<Result>(std::move(maybeResult))};
+    detail::OperationResult<Result> operationResult{result};
+    // This might throw, but it's not a problem
+    decltype(auto) failure{
+        failureDetector.postRun(std::forward<decltype(state)>(state), operationResult)};
+    if (holds_failure(failure)) {
+        // Move the failure from the failure into the result.
+        // In this process we ignore the NoFailure type as it is not a valid state for the
+        // result.
+        return _Failable{
+            visit(detail::make_ignoretype<NoFailure>(detail::ConstructVisitor<DetectorFailure>{}),
+                  std::forward<decltype(failure)>(failure))};
+    }
+    return _Failable{std::move(result)};
 }
 
 } // namespace detail
@@ -242,7 +245,7 @@ public:
 
         // This is invoked when Task is an rvalue.
         // We can move it's members, but ony if they are not lvalues, as the user might have a
-        // reference to them otherwise. If they were passed as reference moving them is incorect:
+        // reference to them otherwise. If they were passed as reference moving them is incorrect:
         // that's why we use forward.
         return detail::runTaskImpl(std::forward<FailureDetector>(d_failureDetector),
                                    std::forward<Callable>(d_callable),
