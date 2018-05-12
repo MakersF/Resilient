@@ -52,15 +52,15 @@ using if_is_convertible_to_get_value_return_type_of =
 
 } // namespace detail
 
-template<typename Failure, typename Value>
+template<typename Value, typename Failure>
 class Failable; // Forward declare so that we can define is_failable before the implementation
 
 template<typename T>
 struct is_failable : std::false_type
 {
 };
-template<typename F, typename V>
-struct is_failable<Failable<F, V>> : std::true_type
+template<typename V, typename F>
+struct is_failable<Failable<V, F>> : std::true_type
 {
 };
 
@@ -78,14 +78,14 @@ using if_is_not_failable = std::enable_if_t<not is_failable<std::decay_t<Q>>::va
  * The value is the return value of the invoked function, the failure is an object representing the
  * failure which happened.
  *
- * @tparam Failure The type of the failure.
  * @tparam Value The value.
+ * @tparam Failure The type of the failure.
  */
-template<typename Failure, typename Value>
-class Failable : private Variant<Failure, Value>
+template<typename Value, typename Failure>
+class Failable : private Variant<Value, Failure>
 {
 private:
-    using Base = Variant<Failure, Value>;
+    using Base = Variant<Value, Failure>;
 
     template<typename Failable>
     friend struct detail::as_variant;
@@ -159,8 +159,8 @@ public:
  * @return true If the `Failable` contains the failure.
  * @return false If the `Failable` contains the value.
  */
-template<typename Failure, typename Value>
-bool holds_failure(const Failable<Failure, Value>& failable)
+template<typename Value, typename Failure>
+bool holds_failure(const Failable<Value, Failure>& failable)
 {
     return holds_alternative<Failure>(detail::get_variant(failable));
 }
@@ -173,8 +173,8 @@ bool holds_failure(const Failable<Failure, Value>& failable)
  * @return true If the `Failable` contains the value.
  * @return false If the `Failable` contains the failure.
  */
-template<typename Failure, typename Value>
-bool holds_value(const Failable<Failure, Value>& failable)
+template<typename Value, typename Failure>
+bool holds_value(const Failable<Value, Failure>& failable)
 {
     return holds_alternative<Value>(detail::get_variant(failable));
 }

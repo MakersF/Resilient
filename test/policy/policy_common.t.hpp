@@ -16,8 +16,8 @@ struct OtherFailure
 {
 };
 
-using SingleFailureFailable = resilient::Failable<Failure, int>;
-using MultipleFailureFailable = resilient::Failable<resilient::Variant<Failure, OtherFailure>, int>;
+using SingleFailureFailable = resilient::Failable<int, Failure>;
+using MultipleFailureFailable = resilient::Failable<int, resilient::Variant<Failure, OtherFailure>>;
 
 template<typename Failable>
 class Callable

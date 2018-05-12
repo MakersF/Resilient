@@ -44,8 +44,8 @@ using add_failure_type_t = typename add_failure_type<Failure>::template type<New
  */
 template<typename Failable, typename... NewFailures>
 using add_failure_to_failable_t =
-    resilient::Failable<add_failure_type_t<typename Failable::failure_type, NewFailures...>,
-                        typename Failable::value_type>;
+    resilient::Failable<typename Failable::value_type,
+                        add_failure_type_t<typename Failable::failure_type, NewFailures...>>;
 
 /**
  * @brief Like `add_failure_to_failable_t`, but remove reference from the `Failable`.

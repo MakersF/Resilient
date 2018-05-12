@@ -106,14 +106,14 @@ auto runTaskImpl(FailureDetector&& failureDetector, Callable&& callable, Args&&.
     using DetectorFailureTypes = typename std::remove_reference_t<FailureDetector>::failure_types;
     using DetectorFailure = typename failure_variant_type<DetectorFailureTypes>::type;
     using Result = detail::invoke_result_t<Callable, Args...>;
-    using _Failable = Failable<DetectorFailure, Result>;
+    using _Failable = Failable<Result, DetectorFailure>;
 
     struct Nothing
     {
     };
-    using TempResultHolder = Variant<Nothing, Result>;
+    using MaybeResult = Variant<Result, Nothing>;
 
-    TempResultHolder maybeResult{Nothing()};
+    MaybeResult maybeResult{Nothing()};
 
     decltype(auto) state{failureDetector.preRun()};
 
