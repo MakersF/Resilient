@@ -8,7 +8,8 @@ ELSE()
     add_compile_options(-std=c++14)
 ENDIF()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -Wextra -Wpedantic -ftemplate-backtrace-limit=0") # TODO remove -O0
+set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall -Wextra -Wpedantic -ftemplate-backtrace-limit=0 -fsanitize=address")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -ftemplate-backtrace-limit=0")
 
 OPTION(FORCE_BOOST "Force boost" OFF)

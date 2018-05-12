@@ -13,7 +13,8 @@ DOCKER?=docker
 
 default: test
 
-# Build the base image
+# Build the base image.
+# $< is the first dependency of the target
 buildimg/.docker-build-image-resilient-ubuntu16: buildimg/$(UBUNTU16).Dockerfile
 	$(DOCKER) build -t $(UBUNTU16) -f $< .
 	@touch $@
@@ -41,17 +42,37 @@ docker-images-clean:
 # It executed the provided command in the /build directory.
 #
 # ------- Implementation Notice -------
+#
+# -t:
+# We allocate a pseudo terminal in order to have colors.
+#
+# --cap-add:
+# We give SYS_PTRACE capability to the container in order to allow asan
+# to detect problems.
+#
+# -v:
 # We mount the current project directory in the same path on the image.
 # To allow the command to access it we define an env variable SRC
 # which specifies the path.
 #
-# To support the user defined environment varibles we expand the list
-# prepending --env.
+# --env:
+# We expand the list of user defined environment variables to pass to the
+# container.
+#
+# -w:
+# We change the default working directory to the build one.
+#
+# $1:
+# We use the name of the container provided
+#
+# We then run the command provided in bash
 define test-target
 test-$1-$2: buildimg/.docker-build-image-$1
+	@echo Running $2 on $1
 	@$(DOCKER) run \
 		--rm \
 		-t \
+		--cap-add SYS_PTRACE \
 		-v $(PROJECT_PATH):$(PROJECT_PATH):ro \
 		-v $(PROJECT_PATH)/build/$1-$2:/build \
 		--env SRC="$(PROJECT_PATH)" \
@@ -77,5 +98,8 @@ $(eval $(call test-target,$(UBUNTU16),cpp14,$(BUILD_COMMAND_CPP14),$(BUILD_ENV_V
 
 # Run the tests on all the images
 test: $(TEST_TARGETS)
+
+local:
+	cd build/local && cmake ../../ && make && ${BUILD_ENV_VARS} make test
 
 .PHONY: test
