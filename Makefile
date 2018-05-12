@@ -10,6 +10,7 @@ BUILD_COMMAND_CPP14:=cmake $$$$SRC && make && make test
 BUILD_ENV_VARS:=GTEST_COLOR=1 CTEST_OUTPUT_ON_FAILURE=1
 
 DOCKER?=docker
+DOXYGEN?=doxygen
 
 default: test
 
@@ -101,5 +102,8 @@ test: $(TEST_TARGETS)
 
 local:
 	cd build/local && cmake ../../ && make && ${BUILD_ENV_VARS} make test
+
+documentation:
+	$(DOXYGEN) doc/doxygen/Doxyfile
 
 .PHONY: test

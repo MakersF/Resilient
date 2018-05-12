@@ -12,8 +12,9 @@ namespace resilient {
 
 /**
  * @brief Open the circuit breaker if a number of failures happen over a time intervall.
+ * @related resilient::ICircuitbreakerStrategy
  *
- * @Tparam Clock The kind of clock to use when measuring time.
+ * @tparam Clock The kind of clock to use when measuring time.
  */
 template<typename Clock = std::chrono::steady_clock>
 class CountStrategy : ICircuitbreakerStrategy
@@ -28,7 +29,7 @@ public:
      * @param tripDuration How long to keep the circuit breaker open once it trips.
      * @param recoverSuccesses How many task executions should succeed before resetting the
      *                         circuit breaker to it's normal state after it triggered.
-     *
+     * @param clock An instance of the clock to use to measure time. Defaults to a default initialized one.
      */
     CountStrategy(unsigned long failures,
                   std::chrono::microseconds failureInterval,

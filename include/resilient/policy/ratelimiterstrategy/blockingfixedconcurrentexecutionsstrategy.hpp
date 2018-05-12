@@ -19,10 +19,26 @@ struct MaxConcurrentPermit
     // We don't require any state here
 };
 
+/**
+ * @brief Allow at most a fixed amount of executions to happen at the same time
+ * @related resilient::IRateLimiterStrategy
+ *
+ * If less then the fixed amount of executions is happening concurrently the
+ * strategy allows immediately to execute.
+ * If the limit has been reached then it waits for one of the current executions
+ * to terminate up to a timeout, after which it returns an error.
+ */
 class BlockingFixedConcurrentExecutionsStrategy
 : IRateLimiterStrategy<MaxConcurrentPermit, PermitAcquireTimeout>
 {
 public:
+    /**
+     * @brief Construct a new BlockingFixedConcurrentExecutionsStrategy object
+     *
+     * @param maxConcurrentExecutions The maximum number of concurrent execution
+     * @param maxWaitTime How long to wait to be allowed to run before returning
+     *                    an error.
+     */
     BlockingFixedConcurrentExecutionsStrategy(unsigned long maxConcurrentExecutions,
                                               std::chrono::microseconds maxWaitTime)
     : d_remainingTokens(maxConcurrentExecutions), d_maxWaitTime(maxWaitTime)

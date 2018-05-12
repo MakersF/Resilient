@@ -22,6 +22,9 @@ template<typename Permit, typename Error>
 class IRateLimiterStrategy
 {
 public:
+    /**
+     * @brief The type of the permit returned by acquire.
+     */
     using permit_type = Permit;
 
     /**
@@ -81,6 +84,8 @@ private:
 public:
     /**
      * @brief Construct a `Ratelimiter` with the provided strategy.
+     *
+     * @param strategy A pointer to the strategy to use.
      */
     Ratelimiter(std::unique_ptr<strategy_type> strategy) : d_strategy(std::move(strategy)) {}
 
