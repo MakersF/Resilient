@@ -37,7 +37,7 @@ TEST_F(SinglePolicies, AcquireReleaseAreInvoked)
         .WillOnce(testing::Return(RateLimiterStrategyMock::acquire_return_type{token}));
     EXPECT_CALL(*strategy, release(testing::Eq(token))).Times(1);
 
-    Ratelimiter<int, RateLimiterStrategyError> rl(std::move(strategy));
+    Ratelimiter<RateLimiterStrategyMock> rl(std::move(strategy));
     auto result = rl.execute(d_callable);
     EXPECT_TRUE(holds_failure(result));
 }
@@ -53,7 +53,7 @@ TEST_F(MultiPolicies, When_StrategyFailsToAcquire_Then_NoCallToCallableAndToRele
             RateLimiterStrategyMock::acquire_return_type{RateLimiterStrategyError()}));
     EXPECT_CALL(*strategy, release(testing::An<int>())).Times(0);
 
-    Ratelimiter<int, RateLimiterStrategyError> rl(std::move(strategy));
+    Ratelimiter<RateLimiterStrategyMock> rl(std::move(strategy));
     auto result = rl.execute(d_callable);
     EXPECT_TRUE(holds_failure(result));
 }
