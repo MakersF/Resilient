@@ -49,7 +49,7 @@ public:
 
 /**
  * @ingroup Policy
- * @brief Limit the impact of a failing dependecy.
+ * @brief Fail-fast when tasks are consistently failing.
  *
  * A missbehaving dependency might take a long time to respond.
  * When many operations depend on it the slowdown can be propagated to the rest of the system.
