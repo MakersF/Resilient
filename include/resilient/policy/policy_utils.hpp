@@ -6,6 +6,8 @@
 
 namespace resilient {
 
+namespace detail {
+
 template<typename Failure>
 struct add_failure_type
 {
@@ -20,6 +22,8 @@ struct add_failure_type<Variant<Failures...>>
     using type = Variant<Failures..., NewFailures...>;
 };
 
+} // namespace detail
+
 /**
  * @brief Given a `Failure`, add new failures to the type.
  *
@@ -30,7 +34,8 @@ struct add_failure_type<Variant<Failures...>>
  * @tparam NewFailures The new `Failure`s to add.
  */
 template<typename Failure, typename... NewFailures>
-using add_failure_type_t = typename add_failure_type<Failure>::template type<NewFailures...>;
+using add_failure_type_t =
+    typename detail::add_failure_type<Failure>::template type<NewFailures...>;
 
 /**
  * @brief Extend a `Failable`'s `Failure` with a new type.
@@ -39,7 +44,7 @@ using add_failure_type_t = typename add_failure_type<Failure>::template type<New
  * 1. A failure_type which is the concatenation of NewFailures to the variant if it is a variant.
  * 2. A failure_type which is a variant of the old failure_type and the NewFailures.
  *
- * @tparam Failable The `Failable` whose failure_type needs to be extended.
+ * @tparam Failable The `Failable` whose `failure_type` needs to be extended.
  * @tparam NewFailures The new `Failure`s to add to the `Failable`.
  */
 template<typename Failable, typename... NewFailures>
@@ -51,7 +56,7 @@ using add_failure_to_failable_t =
  * @brief Like `add_failure_to_failable_t`, but remove reference from the `Failable`.
  */
 template<typename Failable, typename... NewFailures>
-using add_failure_to_noref_t =
+using add_failure_to_noref_failable_t =
     add_failure_to_failable_t<std::remove_reference_t<Failable>, NewFailures...>;
 
 /**

@@ -94,7 +94,7 @@ private:
 
     template<typename Callable, typename... Args>
     using return_type_t =
-        add_failure_to_noref_t<forward_result_of_t<Callable, Args...>, strategy_error>;
+        add_failure_to_noref_failable_t<forward_result_of_t<Callable, Args...>, strategy_error>;
 
 public:
     /**
