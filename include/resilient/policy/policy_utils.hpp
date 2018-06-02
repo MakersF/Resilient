@@ -60,6 +60,23 @@ using add_failure_to_noref_failable_t =
     add_failure_to_failable_t<std::remove_reference_t<Failable>, NewFailures...>;
 
 /**
+ * @brief Replace the `Failure` type of a `Failable` with a different `Failure` type.
+ *
+ * @tparam Failable The `Failable` whose the `failure_type` is going to be replaced.
+ * @tparam NewFailure The new `failure_type` of the failable.
+ */
+template<typename Failable, typename NewFailure>
+using replace_failure_in_failable_t =
+    resilient::Failable<typename Failable::value_type, NewFailure>;
+
+/**
+ * @brief Like `replace_failure_in_failable_t`, but remove reference from the `Failable`.
+ */
+template<typename Failable, typename NewFailure>
+using replace_failure_in_noref_failable_t =
+    replace_failure_in_failable_t<std::remove_reference_t<Failable>, NewFailure>;
+
+/**
  * @brief Define the type returned by invoking `F` with `Args...` both as lvalues.
  */
 template<typename F, typename... Args>

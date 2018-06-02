@@ -1,15 +1,26 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <resilient/policy/retry.hpp>
+#include <chrono>
+#include <type_traits>
+
+#include <resilient/policy/retry/factory/copystatefactory.hpp>
+#include <resilient/policy/retry/retry.hpp>
 #include <test/policy/policy_common.t.hpp>
 
 using namespace policy_test;
 using namespace resilient;
+using namespace std::chrono_literals;
+
+struct NoMoreRetriesAvailable
+{
+};
 
 struct RetryStateMock
 {
-    MOCK_METHOD0(shouldExecute, bool());
+    using stopretries_type = NoMoreRetriesAvailable;
+
+    MOCK_METHOD0(shouldRetry, Variant<retry_after, NoMoreRetriesAvailable>());
     MOCK_METHOD1(failedWith, void(Failure));
 };
 
@@ -24,8 +35,8 @@ TEST_F(SinglePolicies, When_CallFailsAndStrategyAllowsRetry_Then_CallIsMadeAgain
         .WillOnce(testing::Return(SingleFailureFailable(1)));
 
     ::testing::StrictMock<RetryStateMock> stateMock;
-    EXPECT_CALL(stateMock, shouldExecute()).Times(2).WillRepeatedly(testing::Return(true));
     EXPECT_CALL(stateMock, failedWith(testing::A<Failure>())).Times(1);
+    EXPECT_CALL(stateMock, shouldRetry()).WillOnce(testing::Return(retry_after{1us}));
 
     Retry<RetryFactory> retry{RetryFactory(stateMock)};
 
@@ -36,14 +47,16 @@ TEST_F(SinglePolicies, When_CallFailsAndStrategyAllowsRetry_Then_CallIsMadeAgain
 
 TEST_F(SinglePolicies, When_StrategyDoesNotAllowRetry_Then_AnErrorIsReturned)
 {
-    EXPECT_CALL(d_callable, call()).Times(0);
+    EXPECT_CALL(d_callable, call()).WillOnce(testing::Return(SingleFailureFailable{Failure()}));
 
     ::testing::StrictMock<RetryStateMock> stateMock;
-    EXPECT_CALL(stateMock, shouldExecute()).WillOnce(testing::Return(false));
+    EXPECT_CALL(stateMock, failedWith(testing::A<Failure>())).Times(1);
+    EXPECT_CALL(stateMock, shouldRetry()).WillOnce(testing::Return(NoMoreRetriesAvailable()));
 
     Retry<RetryFactory> retry{RetryFactory(stateMock)};
 
     auto result = retry.execute(d_callable);
     EXPECT_TRUE(holds_failure(result));
-    EXPECT_TRUE(holds_alternative<NoMoreRetriesAvailable>(get_failure(result)));
+    static_assert(std::is_same<NoMoreRetriesAvailable&, decltype(get_failure(result))>::value,
+                  "Expected type");
 }

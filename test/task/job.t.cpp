@@ -3,34 +3,16 @@
 
 #include <iostream>
 #include <resilient/detector/returns.hpp>
-#include <resilient/policy/retry.hpp>
+#include <resilient/policy/retry/retry.hpp>
+#include <resilient/policy/retry/factory/copystatefactory.hpp>
+#include <resilient/policy/retry/state/retrytimes.hpp>
 #include <resilient/task/task.hpp>
 
 using namespace resilient;
 
-namespace {
-
-struct MaxRetries
+TEST(Job, SimpleRun)
 {
-    int d_maxRetries;
-
-    bool shouldExecute()
-    {
-        // shouldExecute gets called at the start as well, so we add 1 to offset that
-        return (d_maxRetries-- + 1) != 0;
-    }
-
-    template<typename T>
-    void failedWith(T)
-    {
-    }
-};
-
-} // namespace
-
-TEST(aaa, aaa)
-{
-    Retry<CopyRetryStateFactory<MaxRetries>> retry{{{3}}};
+    Retry<CopyRetryStateFactory<RetryTimes>> retry{{{3}}};
 
     auto result = retry.execute(task([start = 0]() mutable {
                                     std::cout << "Run: " << start << std::endl;
