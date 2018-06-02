@@ -7,7 +7,7 @@
 namespace resilient {
 
 /**
- * @brief Factory which returns copies of the same state
+ * @brief Factory which returns references to the same state.
  * @related resilient::Retry
  *
  * @note
@@ -16,26 +16,26 @@ namespace resilient {
  * @tparam RetryState The state to copy
  */
 template<typename RetryState>
-class CopyRetryStateFactory
+class RefRetryStateFactory
 {
 public:
     /**
-     * @brief Construct a new CopyRetryStateFactory.
+     * @brief Construct a new RefRetryStateFactory.
      *
      * @param state The state that will be copied
      */
-    CopyRetryStateFactory(RetryState state) : d_retryState(std::forward<RetryState>(state)) {}
+    RefRetryStateFactory(RetryState& state) : d_retryState(state) {}
 
     template<typename Failure>
-    RetryState getRetryState(retriedtask_failure<Failure>)
+    RetryState& getRetryState(retriedtask_failure<Failure>)
     {
         return d_retryState;
     }
 
-    void returnRetryState(RetryState) {}
+    void returnRetryState(RetryState&) {}
 
 private:
-    RetryState d_retryState;
+    RetryState& d_retryState;
 };
 
 } // namespace resilient
