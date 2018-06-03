@@ -7,23 +7,9 @@
 
 namespace resilient {
 
-namespace detail {
-
-struct RetryNever
-{
-};
-
-} // namespace detail
-
-/**
- * @brief Use to instantiate a `RetryTimes` that never retries.
- * @related resilient::RetryTimes
- */
-static constexpr detail::RetryNever retry_never{};
-
 /**
  * @brief Type returned when the state does not allow to retry anymore.
- * @related resilient::RetryTimes
+ * @related resilient::Retries
  */
 struct NoMoreRetriesLeft
 {
@@ -39,7 +25,7 @@ struct NoMoreRetriesLeft
  * Implements the `RetryState` concept.
  *
  */
-class RetryTimes
+class Retries
 {
 public:
     using stopretries_type = NoMoreRetriesLeft;
@@ -49,8 +35,7 @@ public:
      *
      * @param numberOfRetries The number of retries
      */
-    RetryTimes(unsigned int numberOfRetries) : d_retriesLeft(numberOfRetries) {}
-    RetryTimes(detail::RetryNever) : d_retriesLeft(0) {}
+    Retries(unsigned int numberOfRetries) : d_retriesLeft(numberOfRetries) {}
 
     Variant<retry_after, stopretries_type> shouldRetry()
     {
