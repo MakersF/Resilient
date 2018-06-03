@@ -52,7 +52,7 @@ public:
     RetryTimes(unsigned int numberOfRetries) : d_retriesLeft(numberOfRetries) {}
     RetryTimes(detail::RetryNever) : d_retriesLeft(0) {}
 
-    Variant<retry_after, NoMoreRetriesLeft> shouldRetry()
+    Variant<retry_after, stopretries_type> shouldRetry()
     {
         if (d_retriesLeft != 0) {
             d_retriesLeft--;
@@ -71,37 +71,6 @@ public:
 
 private:
     unsigned int d_retriesLeft;
-};
-
-/**
- * @brief This type will never be returned because `resilient::AlwaysRetry` always retries.
- *
- */
-struct WillNeverHappenToStopRetries
-{
-};
-
-/**
- * @brief A State which always allows to retry.
- * @related resilient::Retry
- *
- * @note
- * Implements the `RetryState` concept.
- *
- */
-class AlwaysRetry
-{
-    using stopretries_type = WillNeverHappenToStopRetries;
-
-    Variant<retry_after, WillNeverHappenToStopRetries> shouldRetry()
-    {
-        return retry_after{std::chrono::microseconds(0)};
-    }
-
-    template<typename T>
-    void failedWith(T)
-    {
-    }
 };
 
 } // namespace resilient
