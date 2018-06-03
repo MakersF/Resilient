@@ -29,10 +29,10 @@ F construct_from_tuple(const Tuple& t, std::index_sequence<I...>)
  * @tparam Args... The arguments to construct the retry state.
  */
 template<typename RetryState, typename... Args>
-class CtorRetryStateFactory
+class ConstructState
 {
 public:
-    CtorRetryStateFactory(Args... args) : d_stateArguments(std::forward<Args>(args)...) {}
+    ConstructState(Args... args) : d_stateArguments(std::forward<Args>(args)...) {}
 
     template<typename Failure>
     RetryState getRetryState(retriedtask_failure<Failure>)
@@ -48,16 +48,16 @@ private:
 };
 
 /**
- * @brief Create an instance of CtorRetryStateFactory with the given state and arguments.
+ * @brief Create an instance of ConstructState with the given state and arguments.
  *
  * @tparam RetryState The state the factory will construct
  * @param args The arguments to use to construct
  * @return the factory
  */
 template<typename RetryState, typename... Args>
-CtorRetryStateFactory<RetryState, Args...> ctorretrystatefactory(Args&&... args)
+ConstructState<RetryState, Args...> constructstate(Args&&... args)
 {
-    return CtorRetryStateFactory<RetryState, Args...>(std::forward<Args>(args)...);
+    return ConstructState<RetryState, Args...>(std::forward<Args>(args)...);
 }
 
 } // namespace retry
