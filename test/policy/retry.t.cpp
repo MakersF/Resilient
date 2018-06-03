@@ -4,7 +4,7 @@
 #include <chrono>
 #include <type_traits>
 
-#include <resilient/policy/retry/factory/refstatefactory.hpp>
+#include <resilient/policy/retry/factory/refretrystatefactory.hpp>
 #include <resilient/policy/retry/retry.hpp>
 #include <test/policy/policy_common.t.hpp>
 

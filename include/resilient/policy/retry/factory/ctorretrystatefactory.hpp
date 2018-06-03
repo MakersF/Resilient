@@ -28,10 +28,10 @@ F construct_from_tuple(const Tuple& t, std::index_sequence<I...>)
  * @tparam Args... The arguments to construct the retry state.
  */
 template<typename RetryState, typename... Args>
-class ConstructRetryStateFactory
+class CtorRetryStateFactory
 {
 public:
-    ConstructRetryStateFactory(Args... args) : d_stateArguments(std::forward<Args>(args)...) {}
+    CtorRetryStateFactory(Args... args) : d_stateArguments(std::forward<Args>(args)...) {}
 
     template<typename Failure>
     RetryState getRetryState(retriedtask_failure<Failure>)
@@ -47,6 +47,19 @@ private:
 };
 
 /**
+ * @brief Create an instance of CtorRetryStateFactory with the given state and arguments.
+ *
+ * @tparam RetryState The state the factory will construct
+ * @param args The arguments to use to construct
+ * @return the factory
+ */
+template<typename RetryState, typename... Args>
+CtorRetryStateFactory<RetryState, Args...> ctorretrystatefactory(Args&&... args)
+{
+    return CtorRetryStateFactory<RetryState, Args...>(std::forward<Args>(args)...);
+}
+
+/**
  * @brief A factory which construct a RetryState from a template each time a new one is requested.
  * @related resilient::Retry
  *
@@ -57,13 +70,10 @@ private:
  * @tparam Args... The arguments to construct the retry state
  */
 template<template<typename> class RetryStateTemplate, typename... Args>
-class ConstructTemplatedRetryStateFactory
+class CtorTemplatedRetryStateFactory
 {
 public:
-    ConstructTemplatedRetryStateFactory(Args... args)
-    : d_stateArguments(std::forward<Args>(args)...)
-    {
-    }
+    CtorTemplatedRetryStateFactory(Args... args) : d_stateArguments(std::forward<Args>(args)...) {}
 
     template<typename Failure>
     RetryStateTemplate<Failure> getRetryState(retriedtask_failure<Failure>)

@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <resilient/detector/returns.hpp>
-#include <resilient/policy/retry/factory/constructstatefactory.hpp>
+#include <resilient/policy/retry/factory/ctorretrystatefactory.hpp>
 #include <resilient/policy/retry/retry.hpp>
 #include <resilient/policy/retry/state/retrytimes.hpp>
 #include <resilient/task/task.hpp>
@@ -12,7 +12,7 @@ using namespace resilient;
 
 TEST(Job, SimpleRun)
 {
-    Retry<ConstructRetryStateFactory<RetryTimes, unsigned int>> retry{{3}};
+    Retry<CtorRetryStateFactory<RetryTimes, unsigned int>> retry{{3}};
 
     auto result = retry.execute(task([start = 0]() mutable {
                                     std::cout << "Run: " << start << std::endl;

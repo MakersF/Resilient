@@ -1,8 +1,6 @@
 #pragma once
 
 #include <chrono>
-#include <cstdint>
-#include <limits>
 
 #include <resilient/common/variant.hpp>
 #include <resilient/policy/retry/types.hpp>
@@ -11,20 +9,12 @@ namespace resilient {
 
 namespace detail {
 
-struct RetryAlways
-{
-};
 struct RetryNever
 {
 };
 
 } // namespace detail
 
-/**
- * @brief Use to instantiate a `RetryTimes` that always retries.
- * @related resilient::RetryTimes
- */
-static constexpr detail::RetryAlways retry_always{};
 /**
  * @brief Use to instantiate a `RetryTimes` that never retries.
  * @related resilient::RetryTimes
@@ -60,7 +50,6 @@ public:
      * @param numberOfRetries The number of retries
      */
     RetryTimes(unsigned int numberOfRetries) : d_retriesLeft(numberOfRetries) {}
-    RetryTimes(detail::RetryAlways) : d_retriesLeft(std::numeric_limits<std::uint64_t>::max()) {}
     RetryTimes(detail::RetryNever) : d_retriesLeft(0) {}
 
     Variant<retry_after, NoMoreRetriesLeft> shouldRetry()
@@ -81,7 +70,38 @@ public:
     }
 
 private:
-    std::uint64_t d_retriesLeft;
+    unsigned int d_retriesLeft;
+};
+
+/**
+ * @brief This type will never be returned because `resilient::AlwaysRetry` always retries.
+ *
+ */
+struct WillNeverHappenToStopRetries
+{
+};
+
+/**
+ * @brief A State which always allows to retry.
+ * @related resilient::Retry
+ *
+ * @note
+ * Implements the `RetryState` concept.
+ *
+ */
+class AlwaysRetry
+{
+    using stopretries_type = WillNeverHappenToStopRetries;
+
+    Variant<retry_after, WillNeverHappenToStopRetries> shouldRetry()
+    {
+        return retry_after{std::chrono::microseconds(0)};
+    }
+
+    template<typename T>
+    void failedWith(T)
+    {
+    }
 };
 
 } // namespace resilient
