@@ -187,4 +187,14 @@ private:
     RetryStateFactory d_retryStateFactory;
 };
 
+/**
+ * @brief Create an instance of `Retry` with the provided factory.
+ * @related resilient::Retry
+ */
+template<typename RetryStateFactory>
+Retry<RetryStateFactory> retry(RetryStateFactory&& factory)
+{
+    return Retry<RetryStateFactory>(std::forward<RetryStateFactory>(factory));
+}
+
 } // namespace resilient
