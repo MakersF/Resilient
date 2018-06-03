@@ -59,36 +59,4 @@ CtorRetryStateFactory<RetryState, Args...> ctorretrystatefactory(Args&&... args)
     return CtorRetryStateFactory<RetryState, Args...>(std::forward<Args>(args)...);
 }
 
-/**
- * @brief A factory which construct a RetryState from a template each time a new one is requested.
- * @related resilient::Retry
- *
- * @note
- * Implements the `RetryStateFactory` concept.
- *
- * @tparam RetryStateTemplate The template parametrized on the Failure returned by the task.
- * @tparam Args... The arguments to construct the retry state
- */
-template<template<typename> class RetryStateTemplate, typename... Args>
-class CtorTemplatedRetryStateFactory
-{
-public:
-    CtorTemplatedRetryStateFactory(Args... args) : d_stateArguments(std::forward<Args>(args)...) {}
-
-    template<typename Failure>
-    RetryStateTemplate<Failure> getRetryState(retriedtask_failure<Failure>)
-    {
-        return detail::construct_from_tuple<RetryStateTemplate<Failure>>(
-            d_stateArguments, std::make_index_sequence<sizeof...(Args)>{});
-    }
-
-    template<typename Failure>
-    void returnRetryState(RetryStateTemplate<Failure>)
-    {
-    }
-
-private:
-    std::tuple<Args...> d_stateArguments;
-};
-
 } // namespace resilient
