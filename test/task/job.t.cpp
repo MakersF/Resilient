@@ -12,7 +12,7 @@ using namespace resilient;
 
 TEST(Job, SimpleRun)
 {
-    auto retry = resilient::retry(ctorretrystatefactory<Retries>(3u));
+    auto retry = resilient::retry::retry(retry::ctorretrystatefactory<retry::Retries>(3u));
 
     auto result = retry.execute(task([start = 0]() mutable {
                                     std::cout << "Run: " << start << std::endl;

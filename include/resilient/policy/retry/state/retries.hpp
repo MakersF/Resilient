@@ -6,6 +6,7 @@
 #include <resilient/policy/retry/types.hpp>
 
 namespace resilient {
+namespace retry {
 
 /**
  * @brief Type returned when the state does not allow to retry anymore.
@@ -58,4 +59,5 @@ private:
     unsigned int d_retriesLeft;
 };
 
+} // namespace retry
 } // namespace resilient

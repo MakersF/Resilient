@@ -4,6 +4,7 @@
 #include <resilient/policy/retry/types.hpp>
 
 namespace resilient {
+namespace retry {
 
 /**
  * @brief This type will never be returned because `resilient::AlwaysRetry` always retries.
@@ -37,4 +38,5 @@ public:
     }
 };
 
+} // namespace retry
 } // namespace resilient

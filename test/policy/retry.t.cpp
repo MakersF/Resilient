@@ -20,11 +20,11 @@ struct RetryStateMock
 {
     using stopretries_type = NoMoreRetriesAvailable;
 
-    MOCK_METHOD0(shouldRetry, Variant<retry_after, NoMoreRetriesAvailable>());
+    MOCK_METHOD0(shouldRetry, Variant<retry::retry_after, NoMoreRetriesAvailable>());
     MOCK_METHOD1(failedWith, void(Failure));
 };
 
-using RetryFactory = RefRetryStateFactory<::testing::StrictMock<RetryStateMock>>;
+using RetryFactory = retry::RefRetryStateFactory<::testing::StrictMock<RetryStateMock>>;
 
 // TODO test that the state is returned correctly to endExecution()
 
@@ -36,9 +36,9 @@ TEST_F(SinglePolicies, When_CallFailsAndStrategyAllowsRetry_Then_CallIsMadeAgain
 
     ::testing::StrictMock<RetryStateMock> stateMock;
     EXPECT_CALL(stateMock, failedWith(testing::A<Failure>())).Times(1);
-    EXPECT_CALL(stateMock, shouldRetry()).WillOnce(testing::Return(retry_after{1us}));
+    EXPECT_CALL(stateMock, shouldRetry()).WillOnce(testing::Return(retry::retry_after{1us}));
 
-    Retry<RetryFactory> retry{RetryFactory(stateMock)};
+    retry::Retry<RetryFactory> retry{RetryFactory(stateMock)};
 
     auto result = retry.execute(d_callable);
     EXPECT_TRUE(holds_value(result));
@@ -53,7 +53,7 @@ TEST_F(SinglePolicies, When_StrategyDoesNotAllowRetry_Then_AnErrorIsReturned)
     EXPECT_CALL(stateMock, failedWith(testing::A<Failure>())).Times(1);
     EXPECT_CALL(stateMock, shouldRetry()).WillOnce(testing::Return(NoMoreRetriesAvailable()));
 
-    Retry<RetryFactory> retry{RetryFactory(stateMock)};
+    retry::Retry<RetryFactory> retry{RetryFactory(stateMock)};
 
     auto result = retry.execute(d_callable);
     EXPECT_TRUE(holds_failure(result));

@@ -3,6 +3,7 @@
 #include <chrono>
 
 namespace resilient {
+namespace retry {
 
 /**
  * @brief Tag type which contains a Failure type.
@@ -28,4 +29,5 @@ struct retry_after
     std::chrono::microseconds value;
 };
 
-}
+} // namespace retry
+} // namespace resilient

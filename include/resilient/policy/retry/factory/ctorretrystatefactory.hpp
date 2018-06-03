@@ -6,6 +6,7 @@
 #include <resilient/policy/retry/types.hpp>
 
 namespace resilient {
+namespace retry {
 
 namespace detail {
 
@@ -59,4 +60,5 @@ CtorRetryStateFactory<RetryState, Args...> ctorretrystatefactory(Args&&... args)
     return CtorRetryStateFactory<RetryState, Args...>(std::forward<Args>(args)...);
 }
 
+} // namespace retry
 } // namespace resilient

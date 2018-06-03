@@ -9,6 +9,7 @@
 #include <resilient/policy/retry/types.hpp>
 
 namespace resilient {
+namespace retry {
 
 /**
  * @ingroup Policy
@@ -150,7 +151,7 @@ public:
 
         // First execution always happens.
         // This can be called several times, so we can't move callable and args... into it.
-        decltype(auto) result{detail::invoke(callable, args...)};
+        decltype(auto) result{resilient::detail::invoke(callable, args...)};
         if (holds_value(result)) {
             return get_value(std::forward<decltype(result)>(result));
         }
@@ -168,7 +169,7 @@ public:
                 std::this_thread::sleep_for(sleepTime);
             }
             // Same as before, we can not move here
-            decltype(auto) result{detail::invoke(callable, args...)};
+            decltype(auto) result{resilient::detail::invoke(callable, args...)};
             if (holds_value(result)) {
                 return get_value(std::forward<decltype(result)>(result));
             }
@@ -197,4 +198,5 @@ Retry<RetryStateFactory> retry(RetryStateFactory&& factory)
     return Retry<RetryStateFactory>(std::forward<RetryStateFactory>(factory));
 }
 
+} // namespace retry
 } // namespace resilient

@@ -5,6 +5,7 @@
 #include <resilient/policy/retry/types.hpp>
 
 namespace resilient {
+namespace retry {
 
 /**
  * @brief Factory which returns references to the same state.
@@ -38,4 +39,5 @@ private:
     RetryState& d_retryState;
 };
 
+} // namespace retry
 } // namespace resilient
