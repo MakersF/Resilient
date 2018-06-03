@@ -22,12 +22,18 @@ add_library(resilient INTERFACE)
 # target_sources(resilient INTERFACE ${HEADER_FILES})
 target_include_directories(resilient INTERFACE "include/")
 
+# Tests
 enable_testing()
-
 add_subdirectory("/usr/src/gmock" "${CMAKE_BINARY_DIR}/vendor/gmock") # TODO make the path an option
 
 file(GLOB_RECURSE test_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/**/*.t.cpp)
 add_executable(resilient_test ${test_files})
 target_include_directories(resilient_test PUBLIC "." "test/")
 target_link_libraries(resilient_test resilient gtest gtest_main gmock)
-add_test(NAME mytest COMMAND resilient_test)
+add_test(NAME tests COMMAND resilient_test)
+
+# Example
+file(GLOB_RECURSE example_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} examples/**/*.e.cpp)
+add_executable(resilient_examples ${example_files})
+target_link_libraries(resilient_examples resilient)
+add_test(NAME examples COMMAND resilient_examples)
