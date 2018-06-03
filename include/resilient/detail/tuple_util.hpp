@@ -1,10 +1,43 @@
 #pragma once
 
-#include <resilient/detail/utilities.hpp>
 #include <tuple>
 
 namespace resilient {
 namespace detail {
+
+// Append an element to a tuple
+template<typename Tuple, typename T>
+decltype(auto) tuple_append(Tuple&& tuple, T&& item)
+{
+    return std::tuple_cat(std::forward<Tuple>(tuple), std::tuple<T>(std::forward<T>(item)));
+}
+
+// Flatten a list of tuples into a single tuple
+template<typename... Tuples>
+using tuple_flatten_t = decltype(std::tuple_cat(std::declval<Tuples>()...));
+
+namespace impl {
+
+template<typename A, typename B>
+struct tuple_extend;
+
+template<typename... T, typename B>
+struct tuple_extend<std::tuple<T...>, B>
+{
+    using type = std::tuple<T..., B>;
+};
+
+template<typename A, typename... T>
+struct tuple_extend<A, std::tuple<T...>>
+{
+    using type = std::tuple<A, T...>;
+};
+
+template<typename... T, typename... Q>
+struct tuple_extend<std::tuple<T...>, std::tuple<Q...>>
+{
+    using type = std::tuple<T..., Q...>;
+};
 
 // Check if T appears in Tail
 template<typename T, typename... Tail>
@@ -44,10 +77,12 @@ struct unique_types_tuple<std::tuple<Head, Tail...>>
                                     unique_tail>;
 };
 
+} // namespace impl
+
 // Given a tuple A, define a tuple B where every type that appears in tuple A appears in tuple B
 // only once
 template<typename T>
-using unique_types_tuple_t = typename unique_types_tuple<T>::type;
+using unique_types_tuple_t = typename impl::unique_types_tuple<T>::type;
 
 } // namespace detail
 } // namespace resilient

@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <utility>
 
-#include <resilient/detail/unique_types_tuple.hpp>
+#include <resilient/detail/tuple_util.hpp>
 #include <resilient/detail/utilities.hpp>
 #include <resilient/detail/variant_utils.hpp>
 #include <resilient/detector/basedetector.hpp>

@@ -7,6 +7,7 @@
 #include <boost/variant.hpp>
 #include <boost/version.hpp>
 
+#include <resilient/detail/constref_util.hpp>
 #include <resilient/detail/invoke.hpp>
 #include <resilient/detail/utilities.hpp>
 
@@ -16,6 +17,10 @@
 namespace resilient {
 
 namespace detail {
+
+// Get the n-th type from the template argument pack
+template<std::size_t N, typename... Args>
+using argpack_element_t = std::tuple_element_t<N, std::tuple<Args...>>;
 
 // Visitor used to determine if the current type in the variant is T
 template<typename T>
