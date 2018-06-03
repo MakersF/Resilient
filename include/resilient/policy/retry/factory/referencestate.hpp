@@ -17,15 +17,15 @@ namespace retry {
  * @tparam RetryState The state to copy
  */
 template<typename RetryState>
-class RefRetryStateFactory
+class ReferenceState
 {
 public:
     /**
-     * @brief Construct a new RefRetryStateFactory.
+     * @brief Construct a new ReferenceState.
      *
-     * @param state The state that will be copied
+     * @param state The state that will be referenced
      */
-    RefRetryStateFactory(RetryState& state) : d_retryState(state) {}
+    ReferenceState(RetryState& state) : d_retryState(state) {}
 
     template<typename Failure>
     RetryState& getRetryState(retriedtask_failure<Failure>)

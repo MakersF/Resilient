@@ -4,7 +4,7 @@
 #include <chrono>
 #include <type_traits>
 
-#include <resilient/policy/retry/factory/refretrystatefactory.hpp>
+#include <resilient/policy/retry/factory/referencestate.hpp>
 #include <resilient/policy/retry/retry.hpp>
 #include <test/policy/policy_common.t.hpp>
 
@@ -24,7 +24,7 @@ struct RetryStateMock
     MOCK_METHOD1(failedWith, void(Failure));
 };
 
-using RetryFactory = retry::RefRetryStateFactory<::testing::StrictMock<RetryStateMock>>;
+using RetryFactory = retry::ReferenceState<::testing::StrictMock<RetryStateMock>>;
 
 // TODO test that the state is returned correctly to endExecution()
 
