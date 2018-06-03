@@ -60,4 +60,14 @@ private:
     T d_failureValue;
 };
 
+/**
+ * @brief Return an instance of `Returns` with the provided value
+ * @related resilient::Returns
+ */
+template<typename T>
+Returns<T> returns(T&& value)
+{
+    return Returns<T>(std::forward<T>(value));
+}
+
 } // namespace resilient
